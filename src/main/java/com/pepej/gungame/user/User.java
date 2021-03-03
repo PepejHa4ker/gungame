@@ -3,6 +3,7 @@ package com.pepej.gungame.user;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.pepej.papi.gson.GsonProvider;
 import com.pepej.papi.gson.GsonSerializable;
 import com.pepej.papi.gson.JsonBuilder;
 import com.pepej.papi.utils.UndashedUuids;
@@ -29,8 +30,10 @@ public class User implements GsonSerializable {
         JsonObject object = element.getAsJsonObject();
         Preconditions.checkArgument(object.has("username"));
         Preconditions.checkArgument(object.has("id"));
-        return null;
+        return GsonProvider.prettyPrinting().fromJson(object, User.class);
     }
+
+
 
     @Override
     @NonNull
@@ -43,4 +46,5 @@ public class User implements GsonSerializable {
                 .add("levels_reached", levelsReached)
                 .build();
     }
+
 }

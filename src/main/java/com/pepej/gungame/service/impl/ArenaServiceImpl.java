@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+
 public class ArenaServiceImpl implements ArenaService {
 
     @Getter
@@ -51,6 +52,13 @@ public class ArenaServiceImpl implements ArenaService {
         return arenas.stream()
                      .filter(a -> a.getContext().getName().equals(name))
                      .findFirst();
+    }
+
+    @Override
+    public Optional<Arena> getMostRelevantArena() {
+        return arenas.stream()
+                     .filter(Arena::actualToJoin)
+                     .min((a1, a2) -> a2.getContext().getUsers().size() - a1.getContext().getUsers().size());
     }
 
 }

@@ -9,6 +9,10 @@ import java.util.Set;
 
 public interface Arena {
 
+    default boolean actualToJoin() {
+        return this.getState() == ArenaState.STARTING || this.getState() == ArenaState.ENABLED;
+    }
+
     void enable();
 
     void disable();

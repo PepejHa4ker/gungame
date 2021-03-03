@@ -14,6 +14,8 @@ public interface ArenaService {
 
     Optional<Arena> getArena(@NonNull String name);
 
+    Optional<Arena> getMostRelevantArena();
+
     @NonNull
     Set<Arena> getArenas();
 

@@ -4,6 +4,7 @@ import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.api.Team;
 import com.pepej.gungame.service.TeamService;
 import com.pepej.gungame.user.User;
+import com.pepej.papi.adventure.text.Component;
 import com.pepej.papi.serialize.Point;
 import com.pepej.papi.utils.Log;
 import lombok.AccessLevel;
@@ -87,6 +88,7 @@ public class SingleArena implements Arena {
 
     @Override
     public void join(@NonNull final User user) {
+        user.sendMessage(Component.text("Joined arena "  + context.getName()));
 
     }
 

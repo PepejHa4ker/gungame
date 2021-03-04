@@ -1,5 +1,6 @@
 package com.pepej.gungame.service.impl;
 
+import com.google.inject.Singleton;
 import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.service.ArenaService;
 import com.pepej.papi.utils.Log;
@@ -14,6 +15,7 @@ import java.util.Set;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 
+@Singleton
 public class ArenaServiceImpl implements ArenaService {
 
     @Getter

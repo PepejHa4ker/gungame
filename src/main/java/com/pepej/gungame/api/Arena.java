@@ -66,8 +66,6 @@ public interface Arena {
     }
 
     enum ArenaStopCause {
-        INNOCENT_WIN,
-        IMPOSTER_WIN,
         UNKNOWN;
     }
 

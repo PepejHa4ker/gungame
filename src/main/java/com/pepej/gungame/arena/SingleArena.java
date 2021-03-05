@@ -1,8 +1,6 @@
 package com.pepej.gungame.arena;
 
 import com.pepej.gungame.api.Arena;
-import com.pepej.gungame.api.Team;
-import com.pepej.gungame.service.TeamService;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.adventure.text.Component;
 import com.pepej.papi.scheduler.Schedulers;
@@ -19,6 +17,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Team;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.LinkedHashSet;
@@ -145,14 +144,12 @@ public class SingleArena implements Arena, TerminableConsumer {
         @NonNull Set<Team> teams;
         @Getter
         @NonNull Set<User> users;
-        @NonNull TeamService teamService;
 
         public SingleArenaContext(
                 final @NonNull String name,
-                final @NonNull ScoreboardObjective scoreboardObjective, final @NonNull Point lobby,
-                final @NonNull TeamService teamService) {
+                final @NonNull ScoreboardObjective scoreboardObjective, final @NonNull Point lobby
+        ) {
             this.scoreboardObjective = scoreboardObjective;
-            this.teamService = teamService;
             this.name = name;
             this.lobby = lobby;
             this.teams = new LinkedHashSet<>(5);

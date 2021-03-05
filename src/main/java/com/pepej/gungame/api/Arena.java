@@ -4,6 +4,7 @@ import com.pepej.gungame.user.User;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
 import com.pepej.papi.serialize.Point;
 import org.bukkit.World;
+import org.bukkit.scoreboard.Team;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Set;
@@ -46,12 +47,6 @@ public interface Arena extends Runnable {
         @NonNull String getName();
 
         @NonNull ScoreboardObjective getScoreboardObjective();
-
-        default int getTeamsAmount() {
-            return getTeams().size();
-        }
-
-        @NonNull Set<Team> getTeams();
 
         @NonNull Set<User> getUsers();
 

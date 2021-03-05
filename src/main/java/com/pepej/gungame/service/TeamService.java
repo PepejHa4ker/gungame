@@ -1,6 +1,5 @@
 package com.pepej.gungame.service;
 
-import com.pepej.gungame.api.Team;
 import com.pepej.gungame.user.User;
 import org.checkerframework.checker.nullness.qual.NonNull;
 

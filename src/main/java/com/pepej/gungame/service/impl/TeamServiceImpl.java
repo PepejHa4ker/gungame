@@ -1,6 +1,5 @@
 package com.pepej.gungame.service.impl;
 
-import com.pepej.gungame.api.Team;
 import com.pepej.gungame.service.TeamService;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.utils.Log;

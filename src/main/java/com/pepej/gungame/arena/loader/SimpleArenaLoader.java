@@ -1,8 +1,6 @@
 package com.pepej.gungame.arena.loader;
 
-import com.google.inject.Inject;
 import com.pepej.gungame.api.Arena;
-import com.pepej.gungame.api.annotations.ArenaFile;
 import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.arena.SingleArena;
 import com.pepej.gungame.service.TeamService;
@@ -32,12 +30,8 @@ import java.util.Objects;
 public class SimpleArenaLoader implements ArenaLoader {
 
     @NonNull File file;
-    @Inject @NonFinal TeamService teamService;
-
-    @Inject
-    public SimpleArenaLoader(@NotNull @ArenaFile File file) {
+    public SimpleArenaLoader(@NotNull File file) {
         this.file = file;
-
     }
 
     @Override
@@ -80,8 +74,7 @@ public class SimpleArenaLoader implements ArenaLoader {
                 new SingleArena.SingleArenaContext(
                         arenaData.getArenaName(),
                         objective,
-                        arenaData.getLobby(),
-                        teamService
+                        arenaData.getLobby()
                 ));
     }
 }

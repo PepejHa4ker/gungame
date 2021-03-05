@@ -34,13 +34,7 @@ public class SimpleArenaLoader implements ArenaLoader {
 
     @Override
     public void saveArena(@NonNull final Arena arena) {
-        ArenaConfig config = ArenaConfig
-                .builder()
-                .arenaWorld(arena.getWorld().getName())
-                .arenaName(arena.getContext().getName())
-                .lobby(arena.getContext().getLobby())
-                .build();
-
+        ArenaConfig config = arena.getContext().getConfig();
         saveDataToFile(config);
     }
 
@@ -55,24 +49,19 @@ public class SimpleArenaLoader implements ArenaLoader {
     @NonNull
     @SneakyThrows
     public Arena loadArena(@NonNull final String arena) {
-        ArenaConfig arenaData = ConfigFactory.gson()
+        ArenaConfig arenaConfig = ConfigFactory.gson()
                                              .load(file)
                                              .getNode(arena)
                                              .getValue(ArenaConfig.TOKEN);
 
-        if (arenaData == null) {
+        if (arenaConfig == null) {
             throw new NullPointerException("Arena file not found!");
         }
         ScoreboardProvider provider = Services.load(ScoreboardProvider.class);
 
         ScoreboardObjective objective = provider.getScoreboard().createObjective(arena, "&bGunGame", DisplaySlot.SIDEBAR, false);
-        World world = Papi.worldNullable(arenaData.getArenaWorld());
+        World world = Papi.worldNullable(arenaConfig.getArenaWorld());
         Objects.requireNonNull(world, "world");
-        return new SingleArena(world,
-                new SingleArena.SingleArenaContext(
-                        arenaData.getArenaName(),
-                        objective,
-                        arenaData.getLobby()
-                ));
+        return new SingleArena(world, new SingleArena.SingleArenaContext(arenaConfig, objective));
     }
 }

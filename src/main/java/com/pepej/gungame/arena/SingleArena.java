@@ -5,7 +5,6 @@ import com.pepej.gungame.user.User;
 import com.pepej.papi.adventure.text.Component;
 import com.pepej.papi.scheduler.Schedulers;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
-import com.pepej.papi.serialize.Point;
 import com.pepej.papi.terminable.TerminableConsumer;
 import com.pepej.papi.terminable.composite.CompositeTerminable;
 import com.pepej.papi.utils.Log;
@@ -59,7 +58,7 @@ public class SingleArena implements Arena, TerminableConsumer {
             return;
         }
 
-        Log.info("Enabling arena %s", context.getName());
+        Log.info("Enabling arena %s", context.getConfig().getArenaName());
         setStatus(ArenaState.ENABLED);
         Schedulers.builder()
                   .async()
@@ -108,7 +107,7 @@ public class SingleArena implements Arena, TerminableConsumer {
     @Override
     public void join(@NonNull final User user) {
         user.setCurrentArena(this);
-        user.sendMessage(Component.text("Joined arena " + context.getName()));
+        user.sendMessage(Component.text("Joined arena " + context.getConfig().getArenaName()));
         Player player = user.asPlayer();
         context.getScoreboardObjective().subscribe(player);
 
@@ -116,7 +115,7 @@ public class SingleArena implements Arena, TerminableConsumer {
 
     @Override
     public void leave(@NonNull User user) {
-        user.sendMessage(Component.text("Leave arena " + context.getName()));
+        user.sendMessage(Component.text("Leave arena " + context.getConfig().getArenaName()));
         Player player = user.asPlayer();
         context.getScoreboardObjective().unsubscribe(player);
         user.setCurrentArena(null);
@@ -135,23 +134,18 @@ public class SingleArena implements Arena, TerminableConsumer {
     public static class SingleArenaContext implements ArenaContext {
 
         @Getter
-        @NonNull String name;
+        ArenaConfig config;
         @Getter
         @NonNull ScoreboardObjective scoreboardObjective;
-        @Getter
-        @NonNull Point lobby;
         @Getter
         @NonNull Set<Team> teams;
         @Getter
         @NonNull Set<User> users;
 
-        public SingleArenaContext(
-                final @NonNull String name,
-                final @NonNull ScoreboardObjective scoreboardObjective, final @NonNull Point lobby
-        ) {
+        public SingleArenaContext(final ArenaConfig config, final @NonNull ScoreboardObjective scoreboardObjective) {
+            this.config = config;
             this.scoreboardObjective = scoreboardObjective;
-            this.name = name;
-            this.lobby = lobby;
+
             this.teams = new LinkedHashSet<>(5);
             this.users = new LinkedHashSet<>(16);
 

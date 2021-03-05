@@ -1,8 +1,8 @@
 package com.pepej.gungame.api;
 
+import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
-import com.pepej.papi.serialize.Point;
 import org.bukkit.World;
 import org.bukkit.scoreboard.Team;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -44,13 +44,12 @@ public interface Arena extends Runnable {
 
     interface ArenaContext {
 
-        @NonNull String getName();
+        @NonNull ArenaConfig getConfig();
 
         @NonNull ScoreboardObjective getScoreboardObjective();
 
         @NonNull Set<User> getUsers();
 
-        @NonNull Point getLobby();
     }
 
     enum ArenaState {

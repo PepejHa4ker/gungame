@@ -2,11 +2,12 @@ package com.pepej.gungame.arena;
 
 
 import com.google.common.reflect.TypeToken;
+import com.pepej.papi.config.objectmapping.Setting;
+import com.pepej.papi.config.objectmapping.serialize.ConfigSerializable;
 import com.pepej.papi.serialize.Point;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import ninja.leaping.configurate.objectmapping.Setting;
-import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
+
 
 @Data
 @Builder

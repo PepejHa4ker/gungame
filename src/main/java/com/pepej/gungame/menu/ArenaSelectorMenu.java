@@ -1,9 +1,9 @@
 package com.pepej.gungame.menu;
 
-import com.google.inject.Inject;
 import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.service.ArenaService;
 import com.pepej.gungame.service.UserService;
+import com.pepej.papi.Services;
 import com.pepej.papi.item.ItemStackBuilder;
 import com.pepej.papi.menu.Menu;
 import com.pepej.papi.menu.scheme.MenuPopulator;
@@ -27,11 +27,10 @@ public class ArenaSelectorMenu extends Menu {
     private static final MenuScheme RANDOM_JOIN_SCHEME = new MenuScheme()
             .mask("000010000");
 
-    @Inject
-    public ArenaSelectorMenu(final Player player, final ArenaService arenaService, final UserService userService) {
+    public ArenaSelectorMenu(final Player player) {
         super(player, 1, "Выбоо арены");
-        this.arenaService = arenaService;
-        this.userService = userService;
+        this.arenaService = Services.load(ArenaService.class);
+        this.userService = Services.load(UserService.class);
     }
 
     @Override
@@ -39,11 +38,12 @@ public class ArenaSelectorMenu extends Menu {
         MenuPopulator arenaPopulator = ARENAS_SCHEME.newPopulator(this);
         MenuPopulator rjPopulator = RANDOM_JOIN_SCHEME.newPopulator(this);
         rjPopulator.accept(ItemStackBuilder.of(Material.BONE)
-                                            .buildConsumer(e -> {
+                                           .buildConsumer(e -> {
                                                arenaService.getMostRelevantArena().ifPresent(a -> {
-                                                   userService.getUser(e.getWhoClicked().getUniqueId()).ifPresent(a::join);
-                                               });
-                                            })
+                                                   userService.getUserByPlayer((Player)e.getWhoClicked()).ifPresent(a::join);
+                                               })
+                                               ;
+                                           })
         );
 
         for (Arena a : arenaService.getArenas()) {
@@ -52,7 +52,7 @@ public class ArenaSelectorMenu extends Menu {
                     ItemStackBuilder.of(Material.BEDROCK)
                                     .name(a.getContext().getName())
                                     .buildConsumer(e -> {
-//                                        a.join();
+                                        userService.getUser(e.getWhoClicked().getUniqueId()).ifPresent(a::join);
                                     })
             );
         }

@@ -1,13 +1,14 @@
 package com.pepej.gungame.api;
 
 import com.pepej.gungame.user.User;
+import com.pepej.papi.scoreboard.ScoreboardObjective;
 import com.pepej.papi.serialize.Point;
 import org.bukkit.World;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Set;
 
-public interface Arena {
+public interface Arena extends Runnable {
 
     default boolean actualToJoin() {
         return this.getState() == ArenaState.STARTING || this.getState() == ArenaState.ENABLED;
@@ -25,12 +26,11 @@ public interface Arena {
 
     void stop(ArenaStopCause cause, long afterTics);
 
-    @NonNull
-    Team selectRandomTeam(@NonNull User user);
-
     void selectTeam(@NonNull User user, Team team);
 
     void join(@NonNull User user);
+
+    void leave(@NonNull User user);
 
     @NonNull
     ArenaContext getContext();
@@ -44,6 +44,8 @@ public interface Arena {
     interface ArenaContext {
 
         @NonNull String getName();
+
+        @NonNull ScoreboardObjective getScoreboardObjective();
 
         default int getTeamsAmount() {
             return getTeams().size();

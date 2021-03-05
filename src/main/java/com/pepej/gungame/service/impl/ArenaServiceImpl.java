@@ -1,6 +1,5 @@
 package com.pepej.gungame.service.impl;
 
-import com.google.inject.Singleton;
 import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.service.ArenaService;
 import com.pepej.papi.utils.Log;
@@ -8,14 +7,14 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-
-@Singleton
 public class ArenaServiceImpl implements ArenaService {
 
     @Getter
@@ -49,6 +48,13 @@ public class ArenaServiceImpl implements ArenaService {
         });
     }
 
+    @Nullable
+    @Override
+    public Arena getArenaNullable(@NonNull final String name) {
+        return getArena(name).orElse(null);
+    }
+
+    @NotNull
     @Override
     public Optional<Arena> getArena(@NonNull String name) {
         return arenas.stream()
@@ -56,10 +62,11 @@ public class ArenaServiceImpl implements ArenaService {
                      .findFirst();
     }
 
+    @NotNull
     @Override
     public Optional<Arena> getMostRelevantArena() {
         return arenas.stream()
-                     .filter(Arena::actualToJoin)
+//                     .filter(Arena::actualToJoin)
                      .min((a1, a2) -> a2.getContext().getUsers().size() - a1.getContext().getUsers().size());
     }
 

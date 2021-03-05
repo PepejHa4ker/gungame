@@ -3,15 +3,17 @@ package com.pepej.gungame.user;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.pepej.gungame.GunGame;
+import com.pepej.gungame.api.Arena;
 import com.pepej.papi.Papi;
+import com.pepej.papi.Services;
+import com.pepej.papi.adventure.platform.bukkit.BukkitAudiences;
 import com.pepej.papi.adventure.text.Component;
 import com.pepej.papi.gson.GsonProvider;
 import com.pepej.papi.gson.GsonSerializable;
 import com.pepej.papi.gson.JsonBuilder;
 import com.pepej.papi.utils.UndashedUuids;
 import lombok.Data;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -19,7 +21,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.UUID;
 
 @Data
-@ToString
+@EqualsAndHashCode(of = {"id", "username"})
 public class User implements GsonSerializable {
     private final UUID id;
     private final String username;
@@ -27,6 +29,9 @@ public class User implements GsonSerializable {
     private int wins;
     private int kills;
     private int levelsReached;
+
+    @Nullable
+    private Arena currentArena;
 
     public static User deserialize(JsonElement element) {
         Preconditions.checkArgument(element.isJsonObject());
@@ -36,13 +41,13 @@ public class User implements GsonSerializable {
         return GsonProvider.prettyPrinting().fromJson(object, User.class);
     }
 
-    @Nullable
     public Player asPlayer() {
         return Papi.server().getPlayer(this.id);
     }
 
     public void sendMessage(@NonNull Component component) {
-        GunGame.getInstance().getAudiences().sender(asPlayer()).sendMessage(component);
+        BukkitAudiences audiences = Services.load(BukkitAudiences.class);
+        audiences.sender(asPlayer()).sendMessage(component);
 
     }
 

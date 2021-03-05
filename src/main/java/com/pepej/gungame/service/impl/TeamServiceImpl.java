@@ -1,6 +1,5 @@
 package com.pepej.gungame.service.impl;
 
-import com.google.inject.Singleton;
 import com.pepej.gungame.api.Team;
 import com.pepej.gungame.service.TeamService;
 import com.pepej.gungame.user.User;
@@ -12,7 +11,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.util.*;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Singleton
 public class TeamServiceImpl implements TeamService {
 
     @NonNull Map<String, Set<Team>> teamArenaMap;

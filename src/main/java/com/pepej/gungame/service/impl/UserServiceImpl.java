@@ -1,20 +1,24 @@
 package com.pepej.gungame.service.impl;
 
-import com.google.inject.Singleton;
 import com.pepej.gungame.service.UserService;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.events.Events;
 import com.pepej.papi.terminable.TerminableConsumer;
 import com.pepej.papi.terminable.module.TerminableModule;
+import com.pepej.papi.utils.Log;
+import com.pepej.papi.utils.Players;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
-@Singleton
 @Getter
 public class UserServiceImpl implements UserService, TerminableModule {
 
@@ -22,12 +26,21 @@ public class UserServiceImpl implements UserService, TerminableModule {
 
     public UserServiceImpl() {
         this.userCache = new HashSet<>();
+        this.loadAllOnlineUsers();
+    }
+
+    @Override
+    public void loadAllOnlineUsers() {
+        Players.all()
+               .forEach(player -> registerUser(player.getUniqueId(), player.getName()));
     }
 
     @Override
     public void registerUser(@NonNull final UUID id, final String username) {
         User user = new User(id, username);
+        Log.info("loading user %s...", user);
         userCache.add(user);
+
     }
 
     @Override
@@ -36,8 +49,25 @@ public class UserServiceImpl implements UserService, TerminableModule {
     }
 
     @Override
+    public @Nullable User getUserByPlayerNullable(@NonNull final Player player) {
+        return getUserNullable(player.getUniqueId());
+    }
+
+    @Override
+    public @NonNull Optional<User> getUserByPlayer(@NonNull final Player player) {
+        return getUser(player.getUniqueId());
+    }
+
+    @Override
+    public @Nullable User getUserNullable(@NonNull final UUID id) {
+        return getUser(id).orElse(null);
+    }
+
+    @Override
     public Optional<User> getUser(@NonNull final UUID id) {
-        return userCache.stream().filter(u -> u.getId().equals(id)).findFirst();
+        return userCache.stream()
+                        .filter(u -> u.getId().equals(id))
+                        .findFirst();
     }
 
     @Override
@@ -53,7 +83,7 @@ public class UserServiceImpl implements UserService, TerminableModule {
                   Player player = event.getPlayer();
                   registerUser(player.getUniqueId(), player.getName());
               })
-        .bindWith(terminableConsumer);
+              .bindWith(terminableConsumer);
 
         Events.subscribe(PlayerQuitEvent.class)
               .ignoreCancelled(false)

@@ -7,7 +7,10 @@ import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.arena.SingleArena;
 import com.pepej.gungame.service.TeamService;
 import com.pepej.papi.Papi;
+import com.pepej.papi.Services;
 import com.pepej.papi.config.ConfigFactory;
+import com.pepej.papi.scoreboard.ScoreboardObjective;
+import com.pepej.papi.scoreboard.ScoreboardProvider;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
@@ -16,6 +19,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import ninja.leaping.configurate.ConfigurationNode;
 import org.bukkit.World;
+import org.bukkit.scoreboard.DisplaySlot;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,12 +71,15 @@ public class SimpleArenaLoader implements ArenaLoader {
         if (arenaData == null) {
             throw new NullPointerException("Arena file not found!");
         }
+        ScoreboardProvider provider = Services.load(ScoreboardProvider.class);
 
+        ScoreboardObjective objective = provider.getScoreboard().createObjective(arena, "&bGunGame", DisplaySlot.SIDEBAR, false);
         World world = Papi.worldNullable(arenaData.getArenaWorld());
         Objects.requireNonNull(world, "world");
         return new SingleArena(world,
                 new SingleArena.SingleArenaContext(
                         arenaData.getArenaName(),
+                        objective,
                         arenaData.getLobby(),
                         teamService
                 ));

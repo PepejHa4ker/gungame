@@ -8,9 +8,8 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,13 +21,13 @@ public class ArenaServiceImpl implements ArenaService {
     Set<Arena> arenas;
 
     public ArenaServiceImpl() {
-        this.arenas = new LinkedHashSet<>();
+        this.arenas = new HashSet<>();
     }
 
     @Override
     public void register(@NonNull Arena arena) {
-        if (arenas.stream().anyMatch(a -> a.getContext().getName().equals(arena.getContext().getName()))) {
-            Log.warn("Arena with name " + arena.getContext().getName() + " already register!");
+        if (arenas.stream().anyMatch(a -> a.getContext().getConfig().getArenaName().equals(arena.getContext().getConfig().getArenaName()))) {
+            Log.warn("Arena with name " + arena.getContext().getConfig().getArenaName() + " already register!");
             return;
         }
         arenas.add(arena);
@@ -38,11 +37,11 @@ public class ArenaServiceImpl implements ArenaService {
     @Override
     public void unregister(@NonNull String name) {
         Optional<Arena> arena = arenas.stream()
-                               .filter(a -> a.getContext().getName().equals(name))
+                               .filter(a -> a.getContext().getConfig().getArenaName().equals(name))
                                .findFirst();
 
         arena.ifPresent(a -> {
-            a.stop(Arena.ArenaStopCause.UNKNOWN);
+            a.stop();
             a.disable();
             arenas.remove(a);
         });
@@ -54,15 +53,15 @@ public class ArenaServiceImpl implements ArenaService {
         return getArena(name).orElse(null);
     }
 
-    @NotNull
+    @NonNull
     @Override
     public Optional<Arena> getArena(@NonNull String name) {
         return arenas.stream()
-                     .filter(a -> a.getContext().getName().equals(name))
+                     .filter(a -> a.getContext().getConfig().getArenaName().equals(name))
                      .findFirst();
     }
 
-    @NotNull
+    @NonNull
     @Override
     public Optional<Arena> getMostRelevantArena() {
         return arenas.stream()

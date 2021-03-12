@@ -40,19 +40,20 @@ public class ArenaSelectorMenu extends Menu {
         rjPopulator.accept(ItemStackBuilder.of(Material.BONE)
                                            .buildConsumer(e -> {
                                                arenaService.getMostRelevantArena().ifPresent(a -> {
-                                                   userService.getUserByPlayer((Player)e.getWhoClicked()).ifPresent(a::join);
-                                               })
-                                               ;
+                                                   userService.getUserByPlayer((Player) e.getWhoClicked()).ifPresent(a::join);
+                                               });
                                            })
         );
 
         for (Arena a : arenaService.getArenas()) {
-            out.println(a.getContext().getName());
             arenaPopulator.accept(
                     ItemStackBuilder.of(Material.BEDROCK)
-                                    .name(a.getContext().getName())
+                                    .name(a.getContext().getConfig().getArenaName())
                                     .buildConsumer(e -> {
-                                        userService.getUser(e.getWhoClicked().getUniqueId()).ifPresent(a::join);
+                                        userService.getUser(e.getWhoClicked().getUniqueId()).ifPresent(u -> {
+                                            a.join(u);
+                                            out.println(u);
+                                        });
                                     })
             );
         }

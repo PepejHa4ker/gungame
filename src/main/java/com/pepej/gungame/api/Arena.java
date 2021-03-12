@@ -1,18 +1,19 @@
 package com.pepej.gungame.api;
 
 import com.pepej.gungame.arena.ArenaConfig;
+import com.pepej.gungame.equipment.EquipmentResolver;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
 import org.bukkit.World;
-import org.bukkit.scoreboard.Team;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.time.Duration;
 import java.util.Set;
 
 public interface Arena extends Runnable {
 
     default boolean actualToJoin() {
-        return this.getState() == ArenaState.STARTING || this.getState() == ArenaState.ENABLED;
+        return this.getState() == ArenaState.STARTING || this.getState() == ArenaState.WAITING;
     }
 
     void enable();
@@ -21,17 +22,15 @@ public interface Arena extends Runnable {
 
     void start();
 
-    void start(long afterTics);
+    void stop();
 
-    void stop(ArenaStopCause cause);
-
-    void stop(ArenaStopCause cause, long afterTics);
-
-    void selectTeam(@NonNull User user, Team team);
+    void resetTimers();
 
     void join(@NonNull User user);
 
-    void leave(@NonNull User user);
+    void leave(@NonNull User user, ArenaLeaveCause cause);
+
+    void startListening();
 
     @NonNull
     ArenaContext getContext();
@@ -44,16 +43,24 @@ public interface Arena extends Runnable {
 
     interface ArenaContext {
 
+        @NonNull EquipmentResolver getEquipmentResolver();
+
+        @NonNull Duration getArenaStartDuration();
+
         @NonNull ArenaConfig getConfig();
 
         @NonNull ScoreboardObjective getScoreboardObjective();
 
         @NonNull Set<User> getUsers();
 
+        default int getUsersCount() {
+            return this.getUsers().size();
+        }
+
     }
 
     enum ArenaState {
-        ENABLED,
+        WAITING,
         DISABLED,
         STARTING,
         STOPPING,
@@ -61,8 +68,8 @@ public interface Arena extends Runnable {
 
     }
 
-    enum ArenaStopCause {
-        UNKNOWN;
+    enum ArenaLeaveCause {
+        END_OF_GAME,
+        FORCE
     }
-
 }

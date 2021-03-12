@@ -3,9 +3,13 @@ package com.pepej.gungame.arena.loader;
 import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.arena.SingleArena;
+import com.pepej.gungame.equipment.EquipmentResolver;
+import com.pepej.gungame.equipment.EquipmentResolverImpl;
+import com.pepej.gungame.service.ScoreboardService;
 import com.pepej.papi.Papi;
 import com.pepej.papi.config.ConfigFactory;
 import com.pepej.papi.config.ConfigurationNode;
+import com.pepej.papi.scoreboard.Scoreboard;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
 import com.pepej.papi.scoreboard.ScoreboardProvider;
 import com.pepej.papi.services.Services;
@@ -17,7 +21,6 @@ import lombok.experimental.FieldDefaults;
 import org.bukkit.World;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Objects;
@@ -28,7 +31,8 @@ import java.util.Objects;
 public class SimpleArenaLoader implements ArenaLoader {
 
     @NonNull File file;
-    public SimpleArenaLoader(@NotNull File file) {
+
+    public SimpleArenaLoader(@NonNull File file) {
         this.file = file;
     }
 
@@ -41,7 +45,7 @@ public class SimpleArenaLoader implements ArenaLoader {
     @SneakyThrows
     private void saveDataToFile(ArenaConfig config) {
         ConfigurationNode arenaDataNode = ConfigFactory.gson().load(file);
-        arenaDataNode.setValue(ArenaConfig.TOKEN, config);
+        arenaDataNode.set(ArenaConfig.class, config);
         ConfigFactory.gson().loader(file).save(arenaDataNode);
     }
 
@@ -50,18 +54,21 @@ public class SimpleArenaLoader implements ArenaLoader {
     @SneakyThrows
     public Arena loadArena(@NonNull final String arena) {
         ArenaConfig arenaConfig = ConfigFactory.gson()
-                                             .load(file)
-                                             .getNode(arena)
-                                             .getValue(ArenaConfig.TOKEN);
+                                               .load(file)
+                                               .node(arena)
+                                               .get(ArenaConfig.class);
 
         if (arenaConfig == null) {
             throw new NullPointerException("Arena file not found!");
         }
+        EquipmentResolver equipmentResolver = new EquipmentResolverImpl();
         ScoreboardProvider provider = Services.load(ScoreboardProvider.class);
-
-        ScoreboardObjective objective = provider.getScoreboard().createObjective(arena, "&bGunGame", DisplaySlot.SIDEBAR, false);
+        ScoreboardService scoreboardService = Services.load(ScoreboardService.class);
+        Scoreboard scoreboard = provider.getScoreboard();
+        scoreboardService.register("gungame", scoreboard);
+        ScoreboardObjective objective = scoreboard.createObjective(arena, "&bGunGame", DisplaySlot.SIDEBAR, false);
         World world = Papi.worldNullable(arenaConfig.getArenaWorld());
         Objects.requireNonNull(world, "world");
-        return new SingleArena(world, new SingleArena.SingleArenaContext(arenaConfig, objective));
+        return new SingleArena(world, new SingleArena.SingleArenaContext(arenaConfig, objective, equipmentResolver));
     }
 }

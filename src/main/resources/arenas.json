@@ -1,0 +1,36 @@
+{
+  "test-arena-1234": {
+    "lobby": {
+      "x": 1,
+      "y": 1,
+      "z": 1,
+      "world": "pepej"
+    },
+    "start-position" : {
+      "x": 211.5,
+      "y": 100,
+      "z": 52.5,
+      "world": "pepej"
+    },
+    "positions": [
+      {
+        "x": 218.5,
+        "y": 102,
+        "z": 52.5,
+        "world": "pepej"
+      },
+      {
+        "x": 204.5,
+        "y": 102,
+        "z": 52.5,
+        "world": "pepej"
+      }
+    ],
+    "arena-name": "Popa",
+    "arena-world": "pepej",
+    "max-players": 2,
+    "arena-start-delay": "5 seconds",
+    "arena-game-time": "30 seconds",
+    "required-players-to-start": 2
+  }
+}

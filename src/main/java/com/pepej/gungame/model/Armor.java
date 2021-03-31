@@ -30,17 +30,18 @@ public class Armor implements Comparable<Armor> {
     Material sword;
 
 
+
     static {
         values.add(Armor.builder().level(1).helmet(LEATHER_HELMET).chestPlate(LEATHER_CHESTPLATE).leggings(LEATHER_LEGGINGS).boots(LEATHER_BOOTS).sword(WOOD_SWORD).build());
         values.add(Armor.builder().level(2).helmet(CHAINMAIL_HELMET).chestPlate(LEATHER_CHESTPLATE).leggings(LEATHER_LEGGINGS).boots(LEATHER_BOOTS).sword(STONE_SWORD).build());
         values.add(Armor.builder().level(3).helmet(CHAINMAIL_HELMET).chestPlate(CHAINMAIL_CHESTPLATE).leggings(LEATHER_LEGGINGS).boots(LEATHER_BOOTS).sword(STONE_SWORD).build());
         values.add(Armor.builder().level(4).helmet(CHAINMAIL_HELMET).chestPlate(CHAINMAIL_CHESTPLATE).leggings(CHAINMAIL_LEGGINGS).boots(LEATHER_BOOTS).sword(STONE_SWORD).build());
-        values.add(Armor.builder().level(5).helmet(CHAINMAIL_HELMET).chestPlate(CHAINMAIL_CHESTPLATE).leggings(CHAINMAIL_LEGGINGS).boots(CHAINMAIL_LEGGINGS).sword(STONE_SWORD).build());
-        values.add(Armor.builder().level(6).helmet(IRON_HELMET).chestPlate(CHAINMAIL_CHESTPLATE).leggings(CHAINMAIL_LEGGINGS).boots(CHAINMAIL_LEGGINGS).sword(IRON_SWORD).build());
-        values.add(Armor.builder().level(7).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(CHAINMAIL_LEGGINGS).boots(CHAINMAIL_LEGGINGS).sword(IRON_SWORD).build());
-        values.add(Armor.builder().level(8).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(IRON_LEGGINGS).boots(CHAINMAIL_LEGGINGS).sword(IRON_SWORD).build());
-        values.add(Armor.builder().level(9).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(IRON_LEGGINGS).boots(IRON_LEGGINGS).sword(IRON_SWORD).build());
-        values.add(Armor.builder().level(10).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(IRON_LEGGINGS).boots(IRON_LEGGINGS).sword(DIAMOND_SWORD).build());
+        values.add(Armor.builder().level(5).helmet(CHAINMAIL_HELMET).chestPlate(CHAINMAIL_CHESTPLATE).leggings(CHAINMAIL_LEGGINGS).boots(CHAINMAIL_BOOTS).sword(STONE_SWORD).build());
+        values.add(Armor.builder().level(6).helmet(IRON_HELMET).chestPlate(CHAINMAIL_CHESTPLATE).leggings(CHAINMAIL_LEGGINGS).boots(CHAINMAIL_BOOTS).sword(IRON_SWORD).build());
+        values.add(Armor.builder().level(7).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(CHAINMAIL_LEGGINGS).boots(CHAINMAIL_BOOTS).sword(IRON_SWORD).build());
+        values.add(Armor.builder().level(8).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(IRON_LEGGINGS).boots(CHAINMAIL_BOOTS).sword(IRON_SWORD).build());
+        values.add(Armor.builder().level(9).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(IRON_LEGGINGS).boots(IRON_BOOTS).sword(IRON_SWORD).build());
+        values.add(Armor.builder().level(10).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(IRON_LEGGINGS).boots(IRON_BOOTS).sword(DIAMOND_SWORD).build());
         values.add(Armor.builder().level(11).helmet(AIR).chestPlate(AIR).leggings(AIR).boots(AIR).sword(WOOD_SWORD).build());
 
     }

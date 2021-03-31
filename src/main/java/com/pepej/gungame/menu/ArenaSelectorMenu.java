@@ -13,7 +13,8 @@ import lombok.experimental.FieldDefaults;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-import static java.lang.System.out;
+import static com.pepej.gungame.api.Arena.ArenaState.WAITING;
+import static java.lang.String.format;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ArenaSelectorMenu extends Menu {
@@ -28,7 +29,7 @@ public class ArenaSelectorMenu extends Menu {
             .mask("000010000");
 
     public ArenaSelectorMenu(final Player player) {
-        super(player, 1, "Выбоо арены");
+        super(player, 1, "Выбор арены");
         this.arenaService = Services.load(ArenaService.class);
         this.userService = Services.load(UserService.class);
     }
@@ -37,23 +38,34 @@ public class ArenaSelectorMenu extends Menu {
     public void redraw() {
         MenuPopulator arenaPopulator = ARENAS_SCHEME.newPopulator(this);
         MenuPopulator rjPopulator = RANDOM_JOIN_SCHEME.newPopulator(this);
-        rjPopulator.accept(ItemStackBuilder.of(Material.BONE)
+        rjPopulator.accept(ItemStackBuilder.of(Material.COMPASS)
+                                           .nameClickable("&aСлучайная арена")
                                            .buildConsumer(e -> {
-                                               arenaService.getMostRelevantArena().ifPresent(a -> {
-                                                   userService.getUserByPlayer((Player) e.getWhoClicked()).ifPresent(a::join);
-                                               });
+                                                   e.getWhoClicked().closeInventory();
+                                                   arenaService.getMostRelevantArena()
+                                                               .ifPresent(a -> userService
+                                                                       .getUserByPlayer((Player) e.getWhoClicked())
+                                                                       .ifPresent(a::join));
+
                                            })
+
         );
 
         for (Arena a : arenaService.getArenas()) {
+            String color = a.getState() == WAITING ? "&a" : "&c" + a.getContext().getConfig().getArenaName();
             arenaPopulator.accept(
-                    ItemStackBuilder.of(Material.BEDROCK)
-                                    .name(a.getContext().getConfig().getArenaName())
+                    ItemStackBuilder.of(a.getState() == WAITING ? Material.EMERALD_BLOCK : Material.REDSTONE_BLOCK)
+
+                                    .nameClickable(format("%s%s", color, a.getContext().getConfig().getArenaName()))
+                                    .lore(
+                                            format("&7Игроков: &e[%s/%s]", a.getContext().getUsersCount(), a.getContext().getConfig().getMaxPlayers()),
+                                            "",
+                                            format("%s%s", color, a.getState().getDesc()),
+                                            format("&7Макс. уровень: %s/12", a.getContext().getMaxUserLevel())
+                                    )
                                     .buildConsumer(e -> {
-                                        userService.getUser(e.getWhoClicked().getUniqueId()).ifPresent(u -> {
-                                            a.join(u);
-                                            out.println(u);
-                                        });
+                                        e.getWhoClicked().closeInventory();
+                                        userService.getUser(e.getWhoClicked().getUniqueId()).ifPresent(a::join);
                                     })
             );
         }

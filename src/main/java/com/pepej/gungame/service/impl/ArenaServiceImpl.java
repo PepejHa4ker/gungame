@@ -65,7 +65,7 @@ public class ArenaServiceImpl implements ArenaService {
     @Override
     public Optional<Arena> getMostRelevantArena() {
         return arenas.stream()
-//                     .filter(Arena::actualToJoin)
+                     .filter(Arena::actualToJoin)
                      .min((a1, a2) -> a2.getContext().getUsers().size() - a1.getContext().getUsers().size());
     }
 

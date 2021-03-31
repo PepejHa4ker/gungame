@@ -32,6 +32,10 @@ public class ArenaConfig {
     @Required
     List<Position> positions;
 
+//    @Setting
+//    @Required
+//    List<Position> possibleBonusSpawns;
+
     @Setting
     @Required
     String arenaName;

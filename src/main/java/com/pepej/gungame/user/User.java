@@ -1,15 +1,9 @@
 package com.pepej.gungame.user;
 
-import com.google.common.base.Preconditions;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.pepej.gungame.api.Arena;
+import com.pepej.gungame.rpg.quest.Quest;
 import com.pepej.papi.Papi;
-import com.pepej.papi.gson.GsonProvider;
-import com.pepej.papi.gson.GsonSerializable;
-import com.pepej.papi.gson.JsonBuilder;
 import com.pepej.papi.serialize.Position;
-import com.pepej.papi.utils.UndashedUuids;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,13 +12,16 @@ import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @EqualsAndHashCode(of = {"id", "username"})
 @ToString(exclude = "currentArena")
-public class User implements GsonSerializable {
+public class User  {
     private final UUID id;
     private final String username;
     private boolean died;
@@ -33,18 +30,22 @@ public class User implements GsonSerializable {
     private int wins;
     private int kills;
     private int levelsReached;
+    private int exp;
+    private Set<Quest> quests;
+    //local stats
+    private int localExp;
+    private int localKills;
     private int localLevelsReached;
+
+
+    public User(final UUID id, final String username) {
+        quests = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        this.id = id;
+        this.username = username;
+    }
 
     @Nullable
     private Arena currentArena;
-
-    public static User deserialize(JsonElement element) {
-        Preconditions.checkArgument(element.isJsonObject());
-        JsonObject object = element.getAsJsonObject();
-        Preconditions.checkArgument(object.has("username"));
-        Preconditions.checkArgument(object.has("id"));
-        return GsonProvider.prettyPrinting().fromJson(object, User.class);
-    }
 
     @NonNull
     public Optional<Arena> getCurrentArenaSafe() {
@@ -65,18 +66,5 @@ public class User implements GsonSerializable {
     }
 
 
-
-
-    @Override
-    @NonNull
-    public JsonElement serialize() {
-        return JsonBuilder.object()
-                          .add("username", username)
-                          .add("id", UndashedUuids.toString(id))
-                          .add("games_played", gamesPlayed)
-                          .add("wins", wins)
-                          .add("levels_reached", levelsReached)
-                          .build();
-    }
 
 }

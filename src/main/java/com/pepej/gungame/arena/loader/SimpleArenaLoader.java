@@ -10,7 +10,6 @@ import com.pepej.papi.Papi;
 import com.pepej.papi.config.ConfigFactory;
 import com.pepej.papi.config.ConfigurationNode;
 import com.pepej.papi.scoreboard.Scoreboard;
-import com.pepej.papi.scoreboard.ScoreboardObjective;
 import com.pepej.papi.scoreboard.ScoreboardProvider;
 import com.pepej.papi.services.Services;
 import lombok.AccessLevel;
@@ -19,7 +18,6 @@ import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import org.bukkit.World;
-import org.bukkit.scoreboard.DisplaySlot;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
@@ -65,10 +63,9 @@ public class SimpleArenaLoader implements ArenaLoader {
         ScoreboardProvider provider = Services.load(ScoreboardProvider.class);
         ScoreboardService scoreboardService = Services.load(ScoreboardService.class);
         Scoreboard scoreboard = provider.getScoreboard();
-        scoreboardService.register("gungame", scoreboard);
-        ScoreboardObjective objective = scoreboard.createObjective(arena, "&bGunGame", DisplaySlot.SIDEBAR, false);
+        scoreboardService.register(arena, scoreboard);
         World world = Papi.worldNullable(arenaConfig.getArenaWorld());
         Objects.requireNonNull(world, "world");
-        return new SingleArena(world, new SingleArena.SingleArenaContext(arenaConfig, objective, equipmentResolver));
+        return new SingleArena(world, new SingleArena.SingleArenaContext(arenaConfig, scoreboard, equipmentResolver, null));
     }
 }

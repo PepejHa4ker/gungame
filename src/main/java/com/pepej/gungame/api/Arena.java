@@ -2,19 +2,28 @@ package com.pepej.gungame.api;
 
 import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.equipment.EquipmentResolver;
+import com.pepej.gungame.rpg.trap.TrapBase;
 import com.pepej.gungame.user.User;
+import com.pepej.papi.scoreboard.Scoreboard;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
+import com.pepej.papi.serialize.Region;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.bukkit.World;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Set;
 
 public interface Arena extends Runnable {
 
     default boolean actualToJoin() {
-        return this.getState() == ArenaState.STARTING || this.getState() == ArenaState.WAITING;
+        return this.getContext().getUsersCount() < this.getContext().getConfig().getMaxPlayers() &&
+                this.getState() != ArenaState.DISABLED;
     }
+
+    void updateScoreboard(User user, ScoreboardObjective objective);
 
     void enable();
 
@@ -49,9 +58,13 @@ public interface Arena extends Runnable {
 
         @NonNull ArenaConfig getConfig();
 
-        @NonNull ScoreboardObjective getScoreboardObjective();
+        @NonNull Scoreboard getScoreboard();
 
         @NonNull Set<User> getUsers();
+
+        @NonNull Map<Region, TrapBase> getTraps();
+
+        int getMaxUserLevel();
 
         default int getUsersCount() {
             return this.getUsers().size();
@@ -59,12 +72,17 @@ public interface Arena extends Runnable {
 
     }
 
+    @AllArgsConstructor
+    @Getter
     enum ArenaState {
-        WAITING,
-        DISABLED,
-        STARTING,
-        STOPPING,
-        STARTED;
+        WAITING("Ожидание игроков"),
+        DISABLED("Оффлайн"),
+        STARTING("Игра начинается"),
+        STOPPING("Перезагрузка"),
+        STARTED("В игре");
+
+        String desc;
+
 
     }
 

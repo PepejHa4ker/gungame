@@ -17,10 +17,12 @@ tasks.withType(JavaCompile) {
 }
 
 dependencies {
-    implementation("org.jdbi:jdbi3-core:3.8.2")
-    implementation("org.jdbi:jdbi3-sqlobject:3.8.2")
+    implementation("org.jdbi:jdbi3-core:3.18.1")
+    implementation("org.jdbi:jdbi3-sqlobject:3.18.1")
     compileOnly 'org.projectlombok:lombok:1.18.16'
+    compileOnly 'net.luckperms:api:5.3'
     compileOnly("org.checkerframework:checker:3.7.0")
+    implementation 'org.jetbrains:annotations:20.1.0'
     annotationProcessor 'org.projectlombok:lombok:1.18.16'
     compileOnly("com.zaxxer:HikariCP:3.4.5")
     compileOnly("org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT")

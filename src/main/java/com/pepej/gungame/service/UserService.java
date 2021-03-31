@@ -1,9 +1,11 @@
 package com.pepej.gungame.service;
 
+import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.service.impl.UserServiceImpl;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.adventure.text.Component;
 import com.pepej.papi.adventure.title.Title;
+import com.pepej.papi.promise.Promise;
 import com.pepej.papi.services.Implementor;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -20,16 +22,15 @@ public interface UserService {
 
     void loadAllOnlineUsers();
 
-    void broadcastMessage(@NonNull Component message);
+    void broadcastMessage(@NonNull Arena arena, @NonNull Component message);
 
     void sendMessage(@NonNull User user, @NonNull Component message);
 
     default void sendMessage(@NonNull User user, @NonNull String message) {
         sendMessage(user, Component.text(colorize(message)));
     }
-
-    default void broadcastMessage(@NonNull String message) {
-        broadcastMessage(Component.text(colorize(message)));
+    default void broadcastMessage(@NonNull Arena arena, @NonNull String message) {
+        broadcastMessage(arena, Component.text(colorize(message)));
     }
 
      void sendBossBar(@NonNull User user, @NonNull Component message);
@@ -45,8 +46,9 @@ public interface UserService {
         sendTitle(user, title);
     }
 
+    Promise<User> registerUser(@NonNull UUID id, String username);
 
-    void registerUser(@NonNull UUID id, String username);
+    void handleJoin(Player player);
 
     void unregisterUser(@NonNull UUID id);
 
@@ -62,13 +64,22 @@ public interface UserService {
     @Nullable
     User getUserNullable(@NonNull UUID id);
 
-    Optional<User> getUser(@NonNull UUID id);
+    @NonNull
+    Optional<User> getUser(UUID id);
+
+    @NonNull
+    Promise<Optional<User>> getOrLoadUser(UUID id);
+
+    @NonNull
+    default Promise<@NonNull Optional<@Nullable User>> getUserAsync(@NonNull UUID id) {
+        return Promise.supplyingAsync(() -> getUser(id));
+    }
 
     @Nullable
     User getTopUserNullable();
 
     @NonNull
-    default Optional<User> getTopUser() {
+    default Optional<@Nullable User> getTopUser() {
         return Optional.ofNullable(getTopUserNullable());
     }
 

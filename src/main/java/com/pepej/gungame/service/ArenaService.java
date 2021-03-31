@@ -16,7 +16,6 @@ public interface ArenaService {
 
     void unregister(@NonNull String name);
 
-
     @Nullable
     Arena getArenaNullable(@NonNull String name);
 
@@ -28,5 +27,7 @@ public interface ArenaService {
 
     @NonNull
     Set<Arena> getArenas();
+
+
 
 }

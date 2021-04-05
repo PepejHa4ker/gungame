@@ -1,17 +1,17 @@
 package com.pepej.gungame.service;
 
-import com.pepej.papi.hologram.Hologram;
+import com.pepej.gungame.hologram.GunGameHologram;
 import lombok.Getter;
 
 import java.util.Map;
 
 public interface HologramTopService {
 
-    void register(TopStrategy strategy, Hologram hologram);
+    void register(TopStrategy strategy, GunGameHologram hologram);
 
     void updateHolograms();
 
-    Map<TopStrategy, Hologram> getHolograms();
+    Map<TopStrategy, GunGameHologram> getHolograms();
 
 
 

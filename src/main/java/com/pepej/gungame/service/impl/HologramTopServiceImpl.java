@@ -2,10 +2,12 @@ package com.pepej.gungame.service.impl;
 
 import com.pepej.gungame.GlobalConfig;
 import com.pepej.gungame.GunGame;
+import com.pepej.gungame.hologram.GunGameHologram;
 import com.pepej.gungame.repository.UserRepository;
 import com.pepej.gungame.service.HologramTopService;
 import com.pepej.gungame.user.User;
-import com.pepej.papi.hologram.Hologram;
+import com.pepej.gungame.utils.SquarelandApiUtils;
+import com.pepej.papi.Papi;
 import com.pepej.papi.scheduler.Schedulers;
 import com.pepej.papi.services.Services;
 import com.pepej.papi.terminable.TerminableConsumer;
@@ -14,6 +16,7 @@ import com.pepej.papi.utils.StringUtils;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
+import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.HashMap;
@@ -21,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -29,7 +33,7 @@ import static java.util.stream.Collectors.toList;
 public class HologramTopServiceImpl implements HologramTopService, TerminableModule {
 
     @Getter
-    Map<TopStrategy, Hologram> holograms;
+    Map<TopStrategy, GunGameHologram> holograms;
     UserRepository userRepository;
 
 
@@ -40,19 +44,42 @@ public class HologramTopServiceImpl implements HologramTopService, TerminableMod
 
 
     @Override
-    public void register(final TopStrategy strategy, Hologram hologram) {
+    public void register(final TopStrategy strategy, GunGameHologram hologram) {
         holograms.put(strategy, hologram);
     }
 
     @Override
     public void updateHolograms() {
-        for (Map.Entry<TopStrategy, Hologram> entry : holograms.entrySet()) {
+        for (Map.Entry<TopStrategy, GunGameHologram> entry : holograms.entrySet()) {
             TopStrategy key = entry.getKey();
-            Hologram value = entry.getValue();
+            GunGameHologram value = entry.getValue();
             List<User> usersToUpdate = getTopByStrategy(entry.getKey(), userRepository, 10);
             List<String> lines = new LinkedList<>();
             lines.add(format("&cТоп %s", key.getDecsB()));
             AtomicInteger position = new AtomicInteger(1);
+            final User user = usersToUpdate.get(0);
+            if (value.getConfig().getNpcPosition() != null) {
+                SquarelandApiUtils.getUserNpc(user.getUsername(), value.getConfig().getNpcPosition()).thenAcceptAsync(npc -> {
+
+                    final Consumer<Player> clickCallback = player -> {
+                        Papi.server().dispatchCommand(player, format("stats %s", user.getUsername()));
+                    };
+                    if (value.getCurrentNpc() == null) {
+                        value.setCurrentNpc(npc);
+                        npc.setClickCallback(clickCallback);
+
+                    }
+                    else {
+                        npc.setClickCallback(clickCallback);
+                        Schedulers.sync().run(() -> { //remove npcs in main bukkit thread
+                        value.getCurrentNpc().getNpc().despawn();
+                        value.getCurrentNpc().getNpc().destroy();
+                    });
+                        value.setCurrentNpc(npc);
+                    }
+                });
+            }
+
             lines.addAll(usersToUpdate.stream().map(u -> {
                 final int statByStrategy = getStatByStrategy(key, u);
                 return format("&d#%s &a%s &7- &c%s &7%s",
@@ -63,9 +90,9 @@ public class HologramTopServiceImpl implements HologramTopService, TerminableMod
             }).collect(toList()));
 
 
-            value.updateLines(lines);
-            value.delete();
-            value.spawn();
+            value.getHologram().updateLines(lines);
+            value.getHologram().delete();
+            value.getHologram().spawn();
         }
     }
 

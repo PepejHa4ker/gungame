@@ -1,10 +1,11 @@
 {
   "lobby-position": {
-    "x": 338.5,
-    "y": 123,
-    "z": 439.5,
+    "x": 163.5,
+    "y": 83,
+    "z": 16.5,
     "world": "pepej"
   },
 
-  "hologram-update-ticks": 1200
+  "hologram-update-ticks": 1200,
+  "quest-delay": "1 minute"
 }

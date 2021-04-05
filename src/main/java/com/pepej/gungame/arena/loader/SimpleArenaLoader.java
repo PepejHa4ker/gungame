@@ -4,23 +4,25 @@ import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.arena.SingleArena;
 import com.pepej.gungame.equipment.EquipmentResolver;
-import com.pepej.gungame.equipment.EquipmentResolverImpl;
+import com.pepej.gungame.service.ArenaService;
 import com.pepej.gungame.service.ScoreboardService;
 import com.pepej.papi.Papi;
 import com.pepej.papi.config.ConfigFactory;
 import com.pepej.papi.config.ConfigurationNode;
 import com.pepej.papi.scoreboard.Scoreboard;
 import com.pepej.papi.scoreboard.ScoreboardProvider;
-import com.pepej.papi.services.Services;
+import com.pepej.papi.services.Service;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import org.bukkit.World;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
+import java.util.List;
 import java.util.Objects;
 
 @ToString
@@ -30,42 +32,64 @@ public class SimpleArenaLoader implements ArenaLoader {
 
     @NonNull File file;
 
+    @Service
+    @NonFinal
+    ArenaService arenaService;
+
+    @Service
+    @NonFinal
+    EquipmentResolver equipmentResolver;
+
+    @Service
+    @NonFinal
+    ScoreboardProvider scoreboardProvider;
+
+    @Service
+    @NonFinal
+    ScoreboardService scoreboardService;
+
     public SimpleArenaLoader(@NonNull File file) {
         this.file = file;
     }
 
-    @Override
-    public void saveArena(@NonNull final Arena arena) {
-        ArenaConfig config = arena.getContext().getConfig();
-        saveDataToFile(config);
-    }
 
     @SneakyThrows
-    private void saveDataToFile(ArenaConfig config) {
-        ConfigurationNode arenaDataNode = ConfigFactory.gson().load(file);
-        arenaDataNode.set(ArenaConfig.class, config);
-        ConfigFactory.gson().loader(file).save(arenaDataNode);
+    @Override
+    public void loadAndSaveArenaFromConfig(@NonNull final ArenaConfig config) {
+        final ConfigurationNode node = ConfigFactory.gson().load(file);
+        final List<ArenaConfig> arenaConfigs = node.getList(ArenaConfig.class);
+        if (arenaConfigs == null) {
+            return;
+        }
+        arenaConfigs.add(config);
+        node.setList(ArenaConfig.class, arenaConfigs);
+        ConfigFactory.gson().save(file, node);
+        registerArenaFromConfig(config);
+
     }
 
-    @Override
-    @NonNull
-    @SneakyThrows
-    public Arena loadArena(@NonNull final String arena) {
-        ArenaConfig arenaConfig = ConfigFactory.gson()
-                                               .load(file)
-                                               .node(arena)
-                                               .get(ArenaConfig.class);
 
-        if (arenaConfig == null) {
+    @SneakyThrows
+    @Override
+    public void loadAndRegisterAllArenas() {
+        List<ArenaConfig> arenaConfigs = ConfigFactory.gson()
+                                                      .load(file)
+                                                      .getList(ArenaConfig.class);
+        if (arenaConfigs == null) {
             throw new NullPointerException("Arena file not found!");
         }
-        EquipmentResolver equipmentResolver = new EquipmentResolverImpl();
-        ScoreboardProvider provider = Services.load(ScoreboardProvider.class);
-        ScoreboardService scoreboardService = Services.load(ScoreboardService.class);
-        Scoreboard scoreboard = provider.getScoreboard();
-        scoreboardService.register(arena, scoreboard);
-        World world = Papi.worldNullable(arenaConfig.getArenaWorld());
+        for (ArenaConfig arenaConfig : arenaConfigs) {
+            registerArenaFromConfig(arenaConfig);
+        }
+
+    }
+
+    private void registerArenaFromConfig(@NonNull ArenaConfig config) {
+        Scoreboard scoreboard = scoreboardProvider.getScoreboard();
+        scoreboardService.register(config.getArenaId(), scoreboard);
+        World world = Papi.worldNullable(config.getArenaWorld());
         Objects.requireNonNull(world, "world");
-        return new SingleArena(world, new SingleArena.SingleArenaContext(arenaConfig, scoreboard, equipmentResolver, null));
+        final Arena arena = new SingleArena(world, new SingleArena.SingleArenaContext(config, scoreboard, equipmentResolver, null));
+        arenaService.register(arena);
     }
 }

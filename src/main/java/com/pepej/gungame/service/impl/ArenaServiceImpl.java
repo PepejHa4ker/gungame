@@ -49,15 +49,15 @@ public class ArenaServiceImpl implements ArenaService {
 
     @Nullable
     @Override
-    public Arena getArenaNullable(@NonNull final String name) {
-        return getArena(name).orElse(null);
+    public Arena getArenaNullable(@NonNull final String id) {
+        return getArena(id).orElse(null);
     }
 
     @NonNull
     @Override
-    public Optional<Arena> getArena(@NonNull String name) {
+    public Optional<Arena> getArena(@NonNull String id) {
         return arenas.stream()
-                     .filter(a -> a.getContext().getConfig().getArenaName().equals(name))
+                     .filter(a -> a.getContext().getConfig().getArenaId().equals(id))
                      .findFirst();
     }
 

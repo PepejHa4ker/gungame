@@ -1,5 +1,6 @@
 package com.pepej.gungame.menu;
 
+import com.pepej.gungame.GunGame;
 import com.pepej.gungame.rpg.quest.Quest;
 import com.pepej.gungame.rpg.quest.QuestType;
 import com.pepej.gungame.service.QuestService;
@@ -89,7 +90,8 @@ public class QuestSelectorMenu extends PaginatedMenu {
                 if (quest.isCompleted()) {
                     builder.lore(format("&aКвест выполнен &7(&e%s&7)", dateFormat.format(new Date(quest.getCompletionTime()))));
 
-                } else {
+                }
+                else {
                     builder.lore("&cКвест провален");
                 }
                 builder.lore(format("&a%s &7(%s/%s)",
@@ -156,7 +158,7 @@ public class QuestSelectorMenu extends PaginatedMenu {
             if (!questService.canUserTakeQuest(user, type)) {
                 Quest lastCreated = questService.getLastCreationQuestTime(user, type);
                 if (lastCreated != null) {
-                    final long expireTime = lastCreated.getCreationTime() + lastCreated.getExpireTime();
+                    final long expireTime = lastCreated.getCreationTime() + GunGame.getInstance().getGlobalConfig().getQuestDelay().toMillis();
 
                     pop.accept(ItemStackBuilder.of(Material.COMPASS)
                                                .name(format("&c%s &7(Взят)", type.getDisplayName()))
@@ -169,8 +171,25 @@ public class QuestSelectorMenu extends PaginatedMenu {
                 pop.accept(ItemStackBuilder.of(Material.COMPASS)
                                            .nameClickable("&a" + type.getDisplayName())
                                            .lore(format("&7Время на выполнение: &e%s", formatTime(type.getExpiryTimeMs())))
+                                           .lore(format("&7Награда за квест: &e%s", type.getReward()))
                                            .lore("&6Вы не сможете взять другой квест этого типа пока он активен!")
                                            .buildConsumer(e -> {
+                                                       if (!getPlayer().hasPermission(type.getPermission())) {
+                                                           userService.sendMessage(user, "&cВы не можете взять этот квест :(");
+                                                           return;
+                                                       }
+                                                       if (activeQuests.size() >= 1 && !getPlayer().hasPermission("gungame.vip")) {
+                                                           userService.sendMessage(user, "&cЧтобы взять больше одного квеста нужна привелегия &aVip");
+                                                           return;
+                                                       }
+                                                       if (activeQuests.size() >= 2 && !getPlayer().hasPermission("gungame.premium")) {
+                                                           userService.sendMessage(user, "&cЧтобы взять больше двух квестов нужна привелегия &bPremium");
+                                                           return;
+                                                       }
+                                                       if (activeQuests.size() >= 3 && !getPlayer().hasPermission("gungame.grand")) {
+                                                           userService.sendMessage(user, "&cЧтобы взять больше трех квестов нужна привелегия &6Grand");
+                                                           return;
+                                                       }
                                                        if (!questService.canUserTakeQuest(user, type)) {
                                                            return;
                                                        }

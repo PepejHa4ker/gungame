@@ -2,8 +2,8 @@ package com.pepej.gungame.user;
 
 import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.rpg.quest.Quest;
-import com.pepej.papi.Papi;
-import com.pepej.papi.serialize.Position;
+import com.pepej.papi.serialize.Point;
+import com.pepej.papi.utils.Players;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -54,15 +54,18 @@ public class User  {
 
 
     public Player asPlayer() {
-        return Papi.server().getPlayer(this.id);
+        return Players.get(this.id).orElse(null);
     }
 
     public Location location() {
         return asPlayer().getLocation();
     }
 
-    public void teleport(Position pos) {
-        asPlayer().teleport(pos.toLocation());
+    public void teleport(Point pos) {
+        Player player = asPlayer();
+        if (player != null) {
+            player.teleport(pos.toLocation());
+        }
     }
 
 

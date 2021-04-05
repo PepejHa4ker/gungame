@@ -3,6 +3,7 @@ package com.pepej.gungame.hologram;
 import com.pepej.gungame.service.HologramTopService;
 import com.pepej.papi.config.objectmapping.ConfigSerializable;
 import com.pepej.papi.config.objectmapping.meta.Setting;
+import com.pepej.papi.serialize.Point;
 import com.pepej.papi.serialize.Position;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,6 +18,9 @@ public class HologramConfig {
 
     @Setting
     Position position;
+
+    @Setting
+    Point npcPosition;
 
     @Setting
     HologramTopService.TopStrategy strategy;

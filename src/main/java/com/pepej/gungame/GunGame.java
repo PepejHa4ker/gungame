@@ -1,11 +1,13 @@
 package com.pepej.gungame;
 
-import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.arena.loader.ArenaLoader;
 import com.pepej.gungame.arena.loader.SimpleArenaLoader;
+import com.pepej.gungame.equipment.EquipmentResolver;
 import com.pepej.gungame.hologram.loader.HologramLoader;
 import com.pepej.gungame.hologram.loader.HologramLoaderImpl;
 import com.pepej.gungame.listener.Listener;
+import com.pepej.gungame.npc.NpcLoader;
+import com.pepej.gungame.npc.NpcLoaderImpl;
 import com.pepej.gungame.repository.DatabaseService;
 import com.pepej.gungame.repository.QuestRepository;
 import com.pepej.gungame.repository.UserRepository;
@@ -27,10 +29,12 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
-@Plugin(name = "GunGame", version = "1.0.0", authors = "pepej", description = "GunGame plugin", depends = {@PluginDependency("papi"), @PluginDependency("LuckPerms")})
+@Plugin(name = "GunGame", version = "1.0.0", authors = "pepej", description = "GunGame plugin", depends = {@PluginDependency("papi"), @PluginDependency("LuckPerms"),  @PluginDependency("Vault"),  @PluginDependency("Essentials")})
 @Dependency("com.zaxxer:HikariCP:3.4.5")
 @Getter
 public class GunGame extends PapiJavaPlugin {
@@ -53,8 +57,20 @@ public class GunGame extends PapiJavaPlugin {
     @SneakyThrows
     @Override
     public void onPluginEnable() {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            return;
+        }
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        if (rsp == null) {
+            return;
+        }
+        provideService(Economy.class, rsp.getProvider());
         this.globalConfig = ConfigFactory.gson().load(getBundledFile("config.json")).get(GlobalConfig.class);
         provideService(QuestService.class);
+        provideService(EquipmentResolver.class);
+        provideService(NpcService.class);
+        final NpcLoader npcLoader = new NpcLoaderImpl(getBundledFile("npcs.json"));
+        provideService(NpcLoader.class, npcLoader);
         DatabaseService databaseService = new DatabaseService(getBundledFile("database.json"));
         provideService(DatabaseService.class, databaseService);
         provideService(QuestRepository.class, databaseService.getJdbi().onDemand(MySQLQuestRepository.class));
@@ -66,19 +82,16 @@ public class GunGame extends PapiJavaPlugin {
         provideService(ScoreboardService.class);
         provideService(TrapService.class);
         provideService(UserService.class, bindModule(new UserServiceImpl()));
-//        provideService(BonusHandler.class, bindModule(new BonusHandlerImpl()));
         provideService(HologramTopService.class, bindModule(new HologramTopServiceImpl()));
-        provideService(ArenaLoader.class, new SimpleArenaLoader(getBundledFile("arenas.json")));
-        provideService(HologramLoader.class, new HologramLoaderImpl(getBundledFile("holograms.json")));
-//        provideService(TrapLoader.class, new SimpleTrapLoader(getBundledFile("traps.json")));
+        final ArenaLoader arenaLoader = new SimpleArenaLoader(getBundledFile("arenas.json"));
+        provideService(ArenaLoader.class, arenaLoader);
+        final HologramLoader hologramLoader = new HologramLoaderImpl(getBundledFile("holograms.json"));
+        provideService(HologramLoader.class, hologramLoader);
         bindModule(new Listener());
         bindModule(new CommandRegister());
-        ArenaLoader loader = Services.load(ArenaLoader.class);
-        ArenaService arenaService = Services.load(ArenaService.class);
-        final Arena arena = loader.loadArena("test-arena-1234");
-        arenaService.register(arena);
-        getService(HologramLoader.class)
-                .load();
+        hologramLoader.loadAndRegisterAllArenas();
+        arenaLoader.loadAndRegisterAllArenas();
+        npcLoader.loadAngRegisterAllNpcs();
     }
 
     @Override
@@ -86,6 +99,7 @@ public class GunGame extends PapiJavaPlugin {
         UserService userService = Services.load(UserService.class);
         for (final Player player : Players.all()) {
             userService.unregisterUser(player.getUniqueId());
+
         }
     }
 }

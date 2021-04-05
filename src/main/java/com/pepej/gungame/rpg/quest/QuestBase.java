@@ -21,8 +21,8 @@ public abstract class QuestBase implements Quest {
     private final QuestType type;
     private final UUID id;
 
-    public QuestBase(final double reward, final UUID id, QuestType type) {
-        this.reward = reward;
+    public QuestBase(final UUID id, QuestType type) {
+        this.reward = type.getReward();
         this.type = type;
         this.creationTime = System.currentTimeMillis();
         this.id = id;

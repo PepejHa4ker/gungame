@@ -1,11 +1,56 @@
 [
   {
     "position": {
-      "x": 336,
-      "y": 123,
-      "z": 446 ,
+      "x": 158.5,
+      "y": 88,
+      "z": 40.5 ,
+      "world": "pepej"
+    },
+    "strategy": "GAMES"
+  },
+  {
+    "position": {
+      "x": 163.5,
+      "y": 88,
+      "z": 40.5 ,
       "world": "pepej"
     },
     "strategy": "KILLS"
+  },
+  {
+    "position": {
+      "x": 168.5,
+      "y": 88,
+      "z": 40.5,
+      "world": "pepej"
+    },
+    "npc-position": {
+      "x": 168.5,
+      "y": 82,
+      "z": 40.5,
+      "yaw": 0,
+      "pitch": 0,
+      "world": "pepej"
+    },
+    "strategy": "WINS"
+  },
+  {
+    "position": {
+      "x": 148.5,
+      "y": 86.5,
+      "z": 31.5,
+      "world": "pepej"
+    },
+    "strategy": "LEVELS"
+  },
+  {
+    "position": {
+      "x": 177.5,
+      "y": 86.5,
+      "z": 31.5,
+      "world": "pepej"
+    },
+    "strategy": "EXP"
   }
 ]
+

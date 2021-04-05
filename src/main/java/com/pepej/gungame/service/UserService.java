@@ -24,6 +24,8 @@ public interface UserService {
 
     void broadcastMessage(@NonNull Arena arena, @NonNull Component message);
 
+    void broadcastMessage(@NonNull Component message);
+
     void sendMessage(@NonNull User user, @NonNull Component message);
 
     default void sendMessage(@NonNull User user, @NonNull String message) {
@@ -31,6 +33,10 @@ public interface UserService {
     }
     default void broadcastMessage(@NonNull Arena arena, @NonNull String message) {
         broadcastMessage(arena, Component.text(colorize(message)));
+    }
+
+  default void broadcastMessage(@NonNull String message) {
+        broadcastMessage(Component.text(colorize(message)));
     }
 
      void sendBossBar(@NonNull User user, @NonNull Component message);

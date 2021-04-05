@@ -1,0 +1,17 @@
+[
+  {
+    "id": "arena-selector",
+    "position": {
+      "x": 163.5,
+      "y": 83,
+      "z": 30.5,
+      "yaw": 90,
+      "pitch": 90,
+      "world": "pepej"
+    },
+    "display-name": "&dНавигатор",
+    "texture": "ewogICJ0aW1lc3RhbXAiIDogMTYxNTQyODQ5MDgxMSwKICAicHJvZmlsZUlkIiA6ICIyNzc1MmQ2ZTUyYmM0MzVjYmNhOWQ5NzY1MjQ2YWNhNSIsCiAgInByb2ZpbGVOYW1lIiA6ICJkZW1pbWVkIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2JmMmRhNjg3OWNjNTE4MGI3ODRiYTE3YmY0ZDFmZjI5ZDFmM2JjNWMwMjM3ZjdmMmY5NDRhMTc4ZjA1MWJjNiIKICAgIH0KICB9Cn0=",
+    "signature": "qcHq7FGIv3J5dTjOfu+MhwMt96bJVZWwb2kfQHWc5Ql/99iQDtHQEJ0bgiLvQwsQpgFbjk8VCBTXUTGmjWvjYmPWLXsdFAmwtGNyCi86qD060j8SXxWLzVmM6dCvDik0rg88eGnQekICKpCBDm6nRZg5xgQPAn3FiwcwMdJMg5bwqitnYfiBQEJhBCqn7tXC/fZldNdledSnJ6N7O/xJHhpTUEHFDFPRXuOWwHiA6DvCmEj/vCvTCx63EktrOQK3yz9/YxXlrfTRdpYF2FEl2LWkIEsAyvBfw+VNTxtF97WQpzDhZcAcWUIbth2H2qRxOTlofRVanTYIGtrDH43lxe9zMBmultGsb+MdKd5rvVyS3mUZvv71GpnlBKFeyRYWjPFHJDKeIK4rAmedwancz6TWgpa/qAvUuXo4PE/Qwvcl7lkbbiS9fO9xcwjK8HIcxatSYS+WvxQoR5pY2xxk3llazmGqK2CCBGq+5Qw9hS2qNBsqVAp+rZBLr0YkEDENSpa2fvUweAw8c0P0bxk9/6MHxrBsFpv2iYD8iPW4650QIUG785aEZT1AfvJ49VOLJIK4hwU5YuAZaXCaG9ZaLSR1+AIr8FSKb/Eczsj74Nckap2sViSEpiZdRFvfiq7nbisprdFFPTZ/3Uy4d8Bu0nvLQ6zLqnEbdeknuwCEGjg=",
+    "command": "arenas"
+  }
+]

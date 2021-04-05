@@ -1,5 +1,6 @@
 package com.pepej.gungame.service.impl;
 
+import com.pepej.gungame.GunGame;
 import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.repository.QuestRepository;
 import com.pepej.gungame.repository.UserRepository;
@@ -55,6 +56,11 @@ public class UserServiceImpl implements UserService, TerminableModule {
     @Override
     public void broadcastMessage(@NonNull Arena arena, @NonNull final Component message) {
         arena.getContext().getUsers().forEach(user -> sendMessage(user, message));
+    }
+
+    @Override
+    public void broadcastMessage(@NonNull final Component message) {
+        userCache.forEach(user -> sendMessage(user, message));
     }
 
     @Override
@@ -121,10 +127,7 @@ public class UserServiceImpl implements UserService, TerminableModule {
     @Override
     public void handleJoin(final Player player) {
         registerUser(player.getUniqueId(), player.getName());
-//        for (HologramTopService.TopStrategy value : HologramTopService.TopStrategy.values()) {
-//            GunGameHologram hologram = hologramLoader.load(user, value);
-//            topService.register(user, value, hologram);
-//        }
+
     }
 
     @Override
@@ -142,6 +145,8 @@ public class UserServiceImpl implements UserService, TerminableModule {
             userCache.remove(user);
             if (user.getCurrentArena() != null) {
                 user.getCurrentArena().leave(user, Arena.ArenaLeaveCause.FORCE);
+                user.teleport(GunGame.getInstance().getGlobalConfig().getLobbyPosition());
+
             }
         }));
     }

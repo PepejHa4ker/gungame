@@ -2,9 +2,8 @@ package com.pepej.gungame.arena;
 
 
 import com.pepej.papi.config.objectmapping.ConfigSerializable;
-import com.pepej.papi.config.objectmapping.meta.Required;
 import com.pepej.papi.config.objectmapping.meta.Setting;
-import com.pepej.papi.serialize.Position;
+import com.pepej.papi.serialize.Point;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -21,42 +20,29 @@ import java.util.List;
 public class ArenaConfig {
 
     @Setting
-    @Required
-    Position lobby;
+    String arenaId;
 
     @Setting
-    @Required
-    Position startPosition;
+    Point startPosition;
 
     @Setting
-    @Required
-    List<Position> positions;
-
-//    @Setting
-//    @Required
-//    List<Position> possibleBonusSpawns;
+    List<Point> positions;
 
     @Setting
-    @Required
     String arenaName;
 
     @Setting
-    @Required
     String arenaWorld;
 
     @Setting
-    @Required
     int maxPlayers;
 
     @Setting
-    @Required
     int requiredPlayersToStart;
 
     @Setting
-    @Required
     Duration arenaStartDelay;
 
     @Setting
-    @Required
     Duration arenaGameTime;
 }

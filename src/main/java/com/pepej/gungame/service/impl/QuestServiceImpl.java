@@ -1,5 +1,6 @@
 package com.pepej.gungame.service.impl;
 
+import com.pepej.gungame.GunGame;
 import com.pepej.gungame.rpg.quest.*;
 import com.pepej.gungame.service.QuestService;
 import com.pepej.gungame.user.User;
@@ -73,7 +74,7 @@ public class QuestServiceImpl implements QuestService {
     public boolean canUserTakeQuest(final User user, final QuestType questType) {
         Quest last = getLastCreationQuestTime(user, questType);
         if (last != null) {
-           return (System.currentTimeMillis() - last.getCreationTime()) >= questType.getExpiryTimeMs();
+           return (System.currentTimeMillis() - last.getCreationTime()) >= GunGame.getInstance().getGlobalConfig().getQuestDelay().toMillis();
         }
         return true;
     }

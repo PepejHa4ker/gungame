@@ -58,6 +58,8 @@ public interface Arena extends Runnable {
 
         @NonNull ArenaConfig getConfig();
 
+        void setConfig(@NonNull ArenaConfig arenaConfig);
+
         @NonNull Scoreboard getScoreboard();
 
         @NonNull Set<User> getUsers();

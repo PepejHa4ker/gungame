@@ -1,5 +1,6 @@
 package com.pepej.gungame.hologram.loader;
 
+import com.pepej.gungame.hologram.GunGameHologram;
 import com.pepej.gungame.hologram.HologramConfig;
 import com.pepej.gungame.service.HologramTopService;
 import com.pepej.papi.config.ConfigFactory;
@@ -30,7 +31,7 @@ public class HologramLoaderImpl implements HologramLoader {
 
     @Override
     @SneakyThrows
-    public void load() {
+    public void loadAndRegisterAllArenas() {
         List<HologramConfig> configs = ConfigFactory.gson().load(file).getList(HologramConfig.class);
         if (configs == null) {
             throw new IllegalStateException();
@@ -38,7 +39,8 @@ public class HologramLoaderImpl implements HologramLoader {
         for (HologramConfig config : configs) {
             Hologram hologram = factory.newHologram(config.getPosition(), "");
             hologram.spawn();
-            hologramTopService.register(config.getStrategy(), hologram);
+            GunGameHologram gunGameHologram = new GunGameHologram(hologram, config, null);
+            hologramTopService.register(config.getStrategy(), gunGameHologram);
 
         }
 

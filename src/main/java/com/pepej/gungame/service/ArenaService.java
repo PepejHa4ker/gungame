@@ -17,10 +17,10 @@ public interface ArenaService {
     void unregister(@NonNull String name);
 
     @Nullable
-    Arena getArenaNullable(@NonNull String name);
+    Arena getArenaNullable(@NonNull String id);
 
     @NonNull
-    Optional<Arena> getArena(@NonNull String name);
+    Optional<Arena> getArena(@NonNull String id);
 
     @NonNull
     Optional<Arena> getMostRelevantArena();

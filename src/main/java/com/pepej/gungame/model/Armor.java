@@ -43,6 +43,7 @@ public class Armor implements Comparable<Armor> {
         values.add(Armor.builder().level(9).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(IRON_LEGGINGS).boots(IRON_BOOTS).sword(IRON_SWORD).build());
         values.add(Armor.builder().level(10).helmet(IRON_HELMET).chestPlate(IRON_CHESTPLATE).leggings(IRON_LEGGINGS).boots(IRON_BOOTS).sword(DIAMOND_SWORD).build());
         values.add(Armor.builder().level(11).helmet(AIR).chestPlate(AIR).leggings(AIR).boots(AIR).sword(WOOD_SWORD).build());
+        values.add(Armor.builder().level(12).helmet(AIR).chestPlate(AIR).leggings(AIR).boots(AIR).sword(AIR).build());
 
     }
     @Override

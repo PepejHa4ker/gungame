@@ -26,8 +26,8 @@ public class ArenaServiceImpl implements ArenaService {
 
     @Override
     public void register(@NonNull Arena arena) {
-        if (arenas.stream().anyMatch(a -> a.getContext().getConfig().getArenaName().equals(arena.getContext().getConfig().getArenaName()))) {
-            Log.warn("Arena with name " + arena.getContext().getConfig().getArenaName() + " already register!");
+        if (arenas.stream().anyMatch(a -> a.getContext().getConfig().getArenaId().equals(arena.getContext().getConfig().getArenaId()))) {
+            Log.warn("Arena with id " + arena.getContext().getConfig().getArenaName() + " already register!");
             return;
         }
         arenas.add(arena);
@@ -35,16 +35,13 @@ public class ArenaServiceImpl implements ArenaService {
     }
 
     @Override
-    public void unregister(@NonNull String name) {
-        Optional<Arena> arena = arenas.stream()
-                               .filter(a -> a.getContext().getConfig().getArenaName().equals(name))
-                               .findFirst();
-
-        arena.ifPresent(a -> {
-            a.stop();
-            a.disable();
-            arenas.remove(a);
-        });
+    public void unregister(@NonNull String id) {
+        getArena(id)
+              .ifPresent(a -> {
+                  a.stop();
+                  a.disable();
+                  arenas.remove(a);
+              });
     }
 
     @Nullable

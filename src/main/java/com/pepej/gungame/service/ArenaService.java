@@ -14,7 +14,7 @@ public interface ArenaService {
 
     void register(@NonNull Arena arena);
 
-    void unregister(@NonNull String name);
+    void unregister(@NonNull String id);
 
     @Nullable
     Arena getArenaNullable(@NonNull String id);

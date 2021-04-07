@@ -1,7 +1,11 @@
 package com.pepej.gungame;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.arena.ArenaConfig;
+import com.pepej.gungame.arena.loader.ArenaLoader;
 import com.pepej.gungame.menu.ArenaSelectorMenu;
 import com.pepej.gungame.menu.QuestSelectorMenu;
 import com.pepej.gungame.service.ArenaService;
@@ -15,10 +19,13 @@ import com.pepej.papi.config.serialize.SerializationException;
 import com.pepej.papi.metadata.Metadata;
 import com.pepej.papi.metadata.MetadataMap;
 import com.pepej.papi.promise.Promise;
+import com.pepej.papi.protocol.Protocol;
+import com.pepej.papi.scheduler.Schedulers;
 import com.pepej.papi.serialize.Point;
 import com.pepej.papi.services.Services;
 import com.pepej.papi.terminable.TerminableConsumer;
 import com.pepej.papi.terminable.module.TerminableModule;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -28,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -36,10 +44,12 @@ public class CommandRegister implements TerminableModule {
 
     private final UserService userService;
     private final ArenaService arenaService;
+    private final ArenaLoader arenaLoader;
 
     public CommandRegister() {
         userService = Services.load(UserService.class);
         arenaService = Services.load(ArenaService.class);
+        arenaLoader = Services.load(ArenaLoader.class);
     }
 
     @Override
@@ -79,6 +89,41 @@ public class CommandRegister implements TerminableModule {
         Commands.create()
                 .assertPlayer()
                 .assertUsage("<arena>")
+                .description("View arena spawns")
+                .assertPermission("gungame.admin")
+                .assertCooldown(10, TimeUnit.SECONDS)
+                .tabHandler(context -> arenaService.getArenas().stream().map(a -> a.getContext().getConfig().getArenaId()).collect(toList()))
+                .handler(context -> {
+                    Arena arena = arenaService.getArenaNullable(context.arg(0).parseOrFail(String.class));
+                    if (arena == null) {
+                        context.replyError("Арена не найдена");
+                        return;
+                    }
+                    final ArenaConfig config = arena.getContext().getConfig();
+                    AtomicInteger counter = new AtomicInteger(40);
+                    Schedulers.async()
+                              .runRepeating(task -> {
+                                  counter.getAndDecrement();
+                                  if (counter.get() <= 0) {
+                                      task.close();
+                                  }
+                                  for (Point point : config.getPositions()) {
+                                      Location location = point.toLocation();
+                                      PacketContainer packetContainer = new PacketContainer(PacketType.Play.Server.WORLD_PARTICLES);
+                                      packetContainer.getModifier().writeDefaults();
+                                      packetContainer.getParticles().write(0, EnumWrappers.Particle.BARRIER);
+                                      packetContainer.getFloat().write(0, (float) location.getX()).write(1, (float) location.getY()).write(2, (float) location.getZ());
+                                      Protocol.sendPacket(context.sender(), packetContainer);
+                                  }
+                              }, 5,5)
+                              .bindWith(consumer);
+
+
+                })
+                .registerAndBind(consumer, "spawns");
+        Commands.create()
+                .assertPlayer()
+                .assertUsage("<arena>")
                 .description("Create new arena")
                 .assertPermission("gungame.admin")
                 .tabHandler(context -> arenaService.getArenas().stream().map(a -> a.getContext().getConfig().getArenaId()).collect(toList()))
@@ -104,6 +149,23 @@ public class CommandRegister implements TerminableModule {
                     userService.getUserByPlayer(context.sender()).ifPresent(u -> userService.sendMessage(u, "&aВведите имя арены"));
                 })
                 .registerAndBind(consumer, "create");
+        Commands.create()
+                .assertPlayer()
+                .assertUsage("<arena>")
+                .description("Remove arena")
+                .assertPermission("gungame.admin")
+                .tabHandler(context -> arenaService.getArenas().stream().map(a -> a.getContext().getConfig().getArenaId()).collect(toList()))
+                .handler(context -> {
+                    String arena = context.arg(0).parseOrFail(String.class);
+                    if (arenaService.getArenaNullable(arena) == null) {
+                        context.replyError("Арена с текущим id не найдена");
+                        return;
+                    }
+                    arenaLoader.removeArena(arena);
+                   context.replyAnnouncement("Арена была успешно удалена");
+
+                })
+                .registerAndBind(consumer, "remove");
         Commands.create()
                 .assertPlayer()
                 .description("Quest command")

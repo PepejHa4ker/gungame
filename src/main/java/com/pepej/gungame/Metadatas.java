@@ -16,5 +16,6 @@ public final class Metadatas {
     public static final MetadataKey<Boolean> CAN_BE_ATTACKED_KEY = MetadataKey.createBooleanKey("can-be-attacked");
     public static final MetadataKey<ScoreboardObjective> SCOREBOARD_KEY = MetadataKey.create("scoreboard", ScoreboardObjective.class);
     public static final MetadataKey<ArenaConfig.ArenaConfigBuilder> CREATED_ARENA = MetadataKey.create("created-arena", ArenaConfig.ArenaConfigBuilder.class);
+    public static final MetadataKey<Integer> SUPER_SHOTS = MetadataKey.createIntegerKey("super-shots");
 
 }

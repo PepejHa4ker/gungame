@@ -13,6 +13,7 @@ repositories {
     maven { url 'https://libraries.minecraft.net' }
     maven { url 'https://repo.citizensnpcs.co' }
     maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.dmulloy2.net/repository/public/'}
 
 }
 
@@ -24,7 +25,7 @@ dependencies {
     implementation("org.jdbi:jdbi3-core:3.18.1")
     implementation("org.jdbi:jdbi3-sqlobject:3.18.1")
     compileOnly "com.github.MilkBowl:VaultAPI:1.7"
-
+    compileOnly 'com.comphenix.protocol:ProtocolLib:4.6.0'
     compileOnly 'org.projectlombok:lombok:1.18.16'
     compileOnly 'net.luckperms:api:5.3'
     compileOnly("org.checkerframework:checker:3.7.0")

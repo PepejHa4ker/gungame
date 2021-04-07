@@ -2,15 +2,15 @@ package com.pepej.gungame.arena;
 
 import com.pepej.gungame.GunGame;
 import com.pepej.gungame.api.Arena;
+import com.pepej.gungame.api.trap.TrapHandler;
 import com.pepej.gungame.equipment.EquipmentResolver;
 import com.pepej.gungame.model.Armor;
 import com.pepej.gungame.repository.UserRepository;
 import com.pepej.gungame.rpg.quest.QuestType;
-import com.pepej.gungame.rpg.trap.TrapBase;
+import com.pepej.gungame.rpg.trap.Trap;
 import com.pepej.gungame.service.QuestService;
 import com.pepej.gungame.service.UserService;
 import com.pepej.gungame.user.User;
-import com.pepej.papi.event.filter.EventFilters;
 import com.pepej.papi.metadata.ExpiringValue;
 import com.pepej.papi.metadata.Metadata;
 import com.pepej.papi.metadata.MetadataMap;
@@ -31,19 +31,16 @@ import com.pepej.papi.utils.StringUtils;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import org.bukkit.GameMode;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
-import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.player.PlayerLevelChangeEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -55,10 +52,12 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import static com.pepej.gungame.Metadatas.*;
 import static com.pepej.gungame.listener.Listener.ARENA_SELECTOR;
 import static com.pepej.gungame.listener.Listener.QUEST_SELECTOR;
+import static com.pepej.gungame.utils.DonatUtils.applyIfVip;
 import static com.pepej.papi.events.Events.subscribe;
 import static java.lang.String.format;
 
@@ -72,12 +71,19 @@ public class SingleArena implements Arena, TerminableConsumer {
     long timer;
     @NonFinal
     long startTimer;
+
+    @Override
+    public Point getRandomPositionToSpawn() {
+        return RandomSelector.uniform(context.getConfig().getPositions()).pick();
+    }
+
     @NonNull World world;
     @NonNull ArenaContext context;
     @NonNull CompositeTerminable compositeTerminable;
 
     @NonNull UserService userService;
     @NonNull QuestService questService;
+    @NonNull TrapHandler trapHandler;
 
     @NonNull
     @NonFinal
@@ -91,6 +97,7 @@ public class SingleArena implements Arena, TerminableConsumer {
         this.compositeTerminable = CompositeTerminable.create();
         this.userService = Services.load(UserService.class);
         this.questService = Services.load(QuestService.class);
+        this.trapHandler = Services.load(TrapHandler.class);
         resetTimers();
 
     }
@@ -100,7 +107,7 @@ public class SingleArena implements Arena, TerminableConsumer {
     }
 
     @Override
-    public void updateScoreboard(User user, ScoreboardObjective objective) {
+    public void updateMemberScoreboard(User user, ScoreboardObjective objective) {
         switch (state) {
 
             case WAITING:
@@ -180,34 +187,37 @@ public class SingleArena implements Arena, TerminableConsumer {
 
     @Override
     public void stop() {
-        if (state == ArenaState.STARTED) {
-            Promise.start()
-                   .thenRunAsync(() -> setStatus(ArenaState.STOPPING))
-                   .thenRunSync(() -> Log.info("Stopping arena %s", context.getConfig().getArenaName()))
-                   .thenApplySync($ -> userService.getTopUser())
-                   .thenAcceptAsync(user -> user.ifPresent(u -> {
-                       final Player player = u.asPlayer();
-                       if (player != null) {
-                           Players.playSound(player, Sound.ENTITY_ELDER_GUARDIAN_CURSE);
-                       }
+        ArenaState stateBefore = getState();
+        Promise.start()
+               .thenRunAsync(() -> setStatus(ArenaState.STOPPING))
+               .thenRunSync(() -> Log.info("Stopping arena %s", context.getConfig().getArenaName()))
+               .thenApplySync($ -> userService.getTopUser())
+               .thenAcceptAsync(user -> user.ifPresent(u -> {
+                   if (stateBefore == ArenaState.STARTED) {
                        u.setWins(u.getWins() + 1);
                        userService.broadcastMessage(this, format("&cПобедитель: &b%s", u.getUsername()));
                        for (final User usr : userService.getAllUsers()) {
+                           final Player player = usr.asPlayer();
+                           if (player != null) {
+                               Players.playSound(player, Sound.ENTITY_ELDER_GUARDIAN_CURSE);
+                           }
                            if (!context.getUsers().contains(usr)) {
                                userService.sendMessage(usr, format("&aИгрок &6%s&a победил на арене &c%s", u.getUsername(), context.getConfig().getArenaName()));
                            }
                        }
-
-                   }))
-                   .thenApplyAsync($ -> context.getUsers())
-                   .thenAcceptAsync(users -> users.forEach(u -> {
+                   }
+               }))
+               .thenApplyAsync($ -> context.getUsers())
+               .thenAcceptAsync(users -> users.forEach(u -> {
+                   if (stateBefore == ArenaState.STARTED) {
                        u.setGamesPlayed(u.getGamesPlayed() + 1);
                        questService.getActiveQuests(u, QuestType.PLAY_FIVE_GAMES).forEach(questService::onUpdate);
-                       leave(u, ArenaLeaveCause.END_OF_GAME);
-                   }))
-                   .thenRunAsync(this::resetTimers)
-                   .thenRunAsync(() -> setStatus(ArenaState.WAITING));
-        }
+                   }
+                   leave(u, ArenaLeaveCause.END_OF_GAME);
+               }))
+               .thenRunAsync(this::resetTimers)
+               .thenRunAsync(() -> setStatus(ArenaState.WAITING));
+
     }
 
 
@@ -222,11 +232,12 @@ public class SingleArena implements Arena, TerminableConsumer {
         context.getUsers()
                .stream()
                .filter(Objects::nonNull)
+               .filter(user -> !user.isSpectator())
                .forEach(user -> {
                    Player player = user.asPlayer();
                    if (player != null) {
                        ScoreboardObjective objective = Metadata.provideForPlayer(player).getOrNull(SCOREBOARD_KEY);
-                       updateScoreboard(user, objective);
+                       updateMemberScoreboard(user, objective);
                    }
                });
 
@@ -272,6 +283,9 @@ public class SingleArena implements Arena, TerminableConsumer {
                 if (timer <= 0) {
                     stop();
                 }
+                for (User user : context.getUsers()) {
+                    trapHandler.handle(user, this);
+                }
                 context.getUsers().stream()
                        .filter(user -> user.getLocalLevelsReached() >= 12)
                        .findFirst()
@@ -283,11 +297,13 @@ public class SingleArena implements Arena, TerminableConsumer {
 
 
     @Override
-    public void join(@NonNull final User user) {
+    public void join(@NonNull final User user, ArenaJoinType joinType) {
         Player player = user.asPlayer();
-        if (context.getUsers().contains(user)) {
+        if (context.getUsers().contains(user) || user.getCurrentArena() != null) {
             return;
         }
+        context.getUsers().add(user);
+
 
         if (context.getUsersCount() >= context.getConfig().getMaxPlayers()) {
             return;
@@ -297,33 +313,50 @@ public class SingleArena implements Arena, TerminableConsumer {
             return;
         }
 
+        if (joinType == ArenaJoinType.MEMBER) {
+            user.setSpectator(false);
+            user.setLocalLevelsReached(1);
+            player.setLevel(1);
+            player.getInventory().clear();
+            player.setExp(0);
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setSaturation(20);
+            player.setAllowFlight(false);
+            player.setFlying(false);
+            player.setGameMode(GameMode.ADVENTURE);
+            ScoreboardObjective scoreboardObjective = context.getScoreboard().createPlayerObjective(player, "&bGunGame", DisplaySlot.SIDEBAR, false);
+            Metadata.provideForPlayer(player)
+                    .forcePut(SCOREBOARD_KEY, scoreboardObjective);
+            scoreboardObjective.subscribe(player);
 
-        user.setLocalLevelsReached(1);
-        player.setLevel(1);
+            userService.broadcastMessage(this, format("&a+ &d%s &7(&e%s&7/&c%s&7)", user.getUsername(), context.getUsersCount(), context.getConfig().getMaxPlayers()));
+            if (state == ArenaState.WAITING && context.getUsersCount() >= context.getConfig().getRequiredPlayersToStart()) {
+                setStatus(ArenaState.STARTING);
+
+
+            } else if (state == ArenaState.STARTED) {
+                context.getEquipmentResolver().equipUser(user, context.getEquipmentResolver().resolve(1));
+                Point spawn = getRandomPositionToSpawn();
+                user.teleport(spawn);
+            }
+        } else {
+            user.teleport(context.getConfig().getStartPosition());
+            user.setSpectator(true);
+            Schedulers.sync().run(() -> context.getUsers().stream()
+                                               .filter(u -> !u.isSpectator())
+                                               .map(User::asPlayer)
+                                               .filter(Objects::nonNull)
+                                               .forEach(p -> p.hidePlayer(GunGame.getInstance(), player)));
+            player.setAllowFlight(true);
+            player.setCollidable(false);
+            userService.broadcastMessage(this, format("&a+ &d%s &7(Наблюдатьель)", user.getUsername()));
+
+
+        }
+        player.setCanPickupItems(false);
         user.setCurrentArena(this);
-        player.getInventory().clear();
-        player.setExp(0);
-        player.setHealth(20);
-        player.setFoodLevel(20);
-        player.setSaturation(20);
 
-        context.getUsers().add(user);
-        ScoreboardObjective scoreboardObjective = context.getScoreboard().createPlayerObjective(player, "&bGunGame", DisplaySlot.SIDEBAR, false);
-        Metadata.provideForPlayer(player)
-                .forcePut(SCOREBOARD_KEY, scoreboardObjective);
-        scoreboardObjective.subscribe(player);
-
-        userService.broadcastMessage(this, format("&a + &d%s &7(&e%s&7/&c%s&7)", user.getUsername(), context.getUsersCount(), context.getConfig().getMaxPlayers()));
-        if (context.getUsersCount() >= context.getConfig().getRequiredPlayersToStart() && state == ArenaState.WAITING) {
-            setStatus(ArenaState.STARTING);
-
-
-        }
-        else if (state == ArenaState.STARTED) {
-            context.getEquipmentResolver().equipUser(user, context.getEquipmentResolver().resolve(1));
-            Point spawn = RandomSelector.uniform(context.getConfig().getPositions()).pick();
-            user.teleport(spawn);
-        }
     }
 
     @Override
@@ -334,11 +367,17 @@ public class SingleArena implements Arena, TerminableConsumer {
             Metadata.provideForPlayer(player).get(SCOREBOARD_KEY).ifPresent(obj -> obj.unsubscribe(player));
             player.setExp(0);
             player.setLevel(0);
+
             player.setHealth(20);
             player.getInventory().clear();
             player.getInventory().setItem(0, ARENA_SELECTOR);
             player.getInventory().setItem(4, QUEST_SELECTOR);
+            Schedulers.sync().run(() -> {
+                player.setAllowFlight(false);
+                context.getUsers().stream().filter(u -> !u.isSpectator()).map(User::asPlayer).filter(Objects::nonNull).forEach(p -> p.showPlayer(GunGame.getInstance(), player));
+            });
         }
+        user.setSpectator(false);
         user.setCurrentArena(null);
         user.setLocalLevelsReached(0);
         user.setLocalExp(0);
@@ -374,24 +413,40 @@ public class SingleArena implements Arena, TerminableConsumer {
 
     @Override
     public void startListening() {
+        subscribe(PlayerPickupArrowEvent.class)
+                .filter(eventFilter(userService))
+                .handler(e -> {
+                    e.setCancelled(true);
+                    e.getArrow().remove();
+                })
+                .bindWith(this);
+        subscribe(PlayerTeleportEvent.class)
+                .filter(eventFilter(userService))
+                .handler(e -> e.getPlayer().setNoDamageTicks(0))
+                .bindWith(this);
         subscribe(PlayerMoveEvent.class)
-
-                .filter(e -> userService.getUserByPlayer(e.getPlayer()).flatMap(User::getCurrentArenaSafe).isPresent() && state == ArenaState.STARTED)
-                .filter(EventFilters.ignoreSameBlockAndY())
+                .filter(eventFilter(userService))
                 .handler(event -> {
-                    MetadataMap metadataMap = Metadata.provideForPlayer(event.getPlayer());
+                    final Player player = event.getPlayer();
+                    MetadataMap metadataMap = Metadata.provideForPlayer(player);
                     metadataMap.forcePut(CAN_BE_ATTACKED_KEY, ExpiringValue.of(true, 10, TimeUnit.SECONDS));
+
+
                 })
                 .bindWith(this);
 
         subscribe(EntityDamageByEntityEvent.class)
                 .filter(e -> (e.getDamager() instanceof Player) && (e.getEntity() instanceof Player))
-
                 .handler(event -> {
                     Player attacker = (Player) event.getDamager();
-                    Optional<User> attackerUser = userService.getUserByPlayer(attacker);
-                    if (userService.getUserByPlayer(attacker).flatMap(User::getCurrentArenaSafe).isPresent() && state == ArenaState.STARTED) {
-                        Player victim = (Player) event.getEntity();
+                    Player victim = (Player) event.getEntity();
+                    User attackerUser = userService.getUserByPlayerNullable(attacker);
+                    User victimUser = userService.getUserByPlayerNullable(victim);
+                    if (attackerUser != null && attackerUser.getCurrentArena() != null && victimUser != null && victimUser.getCurrentArena() != null && state == ArenaState.STARTED) {
+                        if (attackerUser.isSpectator() || victimUser.isSpectator()) {
+                            event.setCancelled(true);
+                            return;
+                        }
                         MetadataMap attackerMeta = Metadata.provideForPlayer(attacker);
                         attackerMeta.forcePut(CAN_BE_ATTACKED_KEY, ExpiringValue.of(true, 10, TimeUnit.SECONDS));
                         MetadataMap victimMeta = Metadata.provideForPlayer(victim);
@@ -400,30 +455,22 @@ public class SingleArena implements Arena, TerminableConsumer {
                         }
                         else {
                             event.setCancelled(true);
-                            attackerUser.ifPresent(us -> {
-                                userService.sendMessage(us, "&cИгрок в No-PvP режиме!");
-                            });
+                            userService.sendMessage(attackerUser, "&cИгрок в No-PvP режиме!");
                         }
                     }
-                })
-                .bindWith(this);
-        subscribe(ProjectileHitEvent.class)
-                .filter(e -> e.getEntity() instanceof Arrow && e.getHitEntity() != null && e.getHitEntity() instanceof Player)
-                .handler(event -> {
-                    Arrow arrow = (Arrow) event.getEntity();
-                    if (arrow.getShooter() != null && arrow.getShooter() instanceof Player) {
-                        Player attacker = (Player) arrow.getShooter();
-                        if (userService.getUserByPlayer(attacker).flatMap(User::getCurrentArenaSafe).isPresent() && state == ArenaState.STARTED) {
-                            Player victim = (Player) event.getHitEntity();
-                            MetadataMap victimMeta = Metadata.provideForPlayer(victim);
-                            victimMeta.forcePut(LAST_ATTACKER_KEY, ExpiringValue.of(attacker.getUniqueId(), 15, TimeUnit.SECONDS));
-                        }
-                    }
-                })
-                .bindWith(this);
 
+
+                })
+                .bindWith(this);
         subscribe(PlayerDeathEvent.class)
-                .filter(e -> userService.getUserByPlayer(e.getEntity()).flatMap(User::getCurrentArenaSafe).isPresent() && state == ArenaState.STARTED)
+                .filter(e -> {
+                    User user = userService.getUserByPlayerNullable(e.getEntity());
+                    if (user == null) {
+                        return false;
+                    }
+                    Arena currentArena = user.getCurrentArena();
+                    return currentArena != null && currentArena.equals(this) && currentArena.getState() == ArenaState.STARTED;
+                })
                 .handler(event -> {
                     event.setDeathMessage("");
                     User dead = userService.getUserByPlayerNullable(event.getEntity());
@@ -451,10 +498,7 @@ public class SingleArena implements Arena, TerminableConsumer {
                                        if (player != null) {
                                            player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 60, 1), true);
                                            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 1), true);
-                                           if (player.hasPermission("gungame.vip")) {
-                                               player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 80, 0), true);
-
-                                           }
+                                           applyIfVip(player, p -> p.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 80, 0), true));
                                        }
 
                                    });
@@ -473,22 +517,30 @@ public class SingleArena implements Arena, TerminableConsumer {
                 .bindWith(this);
 
         subscribe(PlayerRespawnEvent.class)
-                .filter(e -> userService.getUserByPlayer(e.getPlayer()).flatMap(User::getCurrentArenaSafe).isPresent() && state == ArenaState.STARTED)
+                .filter(eventFilter(userService))
                 .handler(event -> {
                     MetadataMap metadataMap = Metadata.provideForPlayer(event.getPlayer());
                     metadataMap.forcePut(CAN_BE_ATTACKED_KEY, ExpiringValue.of(false, 10, TimeUnit.SECONDS));
-                    Point spawn = RandomSelector.uniform(context.getConfig().getPositions()).pick();
+                    Point spawn = getRandomPositionToSpawn();
                     event.setRespawnLocation(spawn.toLocation());
                 })
                 .bindWith(this);
 
+
         subscribe(BlockBreakEvent.class, EventPriority.HIGHEST)
-                .filter(e -> userService.getUserByPlayer(e.getPlayer()).flatMap(User::getCurrentArenaSafe).isPresent() && state == ArenaState.STARTED)
+                .filter(e -> {
+                    User user = userService.getUserByPlayerNullable(e.getPlayer());
+                    if (user == null) {
+                        return false;
+                    }
+                    Arena currentArena = user.getCurrentArena();
+                    return currentArena != null && currentArena.equals(this) && currentArena.getState() == ArenaState.STARTED;
+                })
                 .handler(e -> e.setCancelled(true))
                 .bindWith(this);
 
         subscribe(PlayerLevelChangeEvent.class)
-                .filter(e -> userService.getUserByPlayer(e.getPlayer()).flatMap(User::getCurrentArenaSafe).isPresent() && state == ArenaState.STARTED)
+                .filter(eventFilter(userService))
                 .handler(event -> {
                     if (event.getNewLevel() == 1) {
                         return;
@@ -515,6 +567,18 @@ public class SingleArena implements Arena, TerminableConsumer {
 
                 })
                 .bindWith(this);
+    }
+
+    private <T extends PlayerEvent> Predicate<T> eventFilter(UserService userService) {
+        return e -> {
+
+            User user = userService.getUserByPlayerNullable(e.getPlayer());
+            if (user == null) {
+                return false;
+            }
+            Arena currentArena = user.getCurrentArena();
+            return currentArena != null && currentArena.equals(this) && currentArena.getState() == ArenaState.STARTED;
+        };
     }
 
     private static String formatSeconds(long secs) {
@@ -563,9 +627,9 @@ public class SingleArena implements Arena, TerminableConsumer {
         @NonNull Scoreboard scoreboard;
         @NonNull UserService userService;
         @NonNull Set<User> users;
-        @NonNull Map<Region, TrapBase> traps;
+        @NonNull Map<Region, Trap> traps;
 
-        public SingleArenaContext(final ArenaConfig config, final @NonNull Scoreboard scoreboard, @NonNull final EquipmentResolver equipmentResolver, final @NonNull Map<Region, TrapBase> traps) {
+        public SingleArenaContext(final ArenaConfig config, final @NonNull Scoreboard scoreboard, @NonNull final EquipmentResolver equipmentResolver, final @NonNull Map<Region, Trap> traps) {
             this.config = config;
             this.scoreboard = scoreboard;
             this.arenaStartDuration = config.getArenaStartDelay();

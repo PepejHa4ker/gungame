@@ -5,8 +5,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 public interface ArenaLoader {
 
-    void loadAndSaveArenaFromConfig(@NonNull ArenaConfig config);
+    void removeArena(String arenaId);
 
+    void loadAndSaveArenaFromConfig(@NonNull ArenaConfig config);
 
     void loadAndRegisterAllArenas();
 

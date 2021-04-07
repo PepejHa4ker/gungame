@@ -1,5 +1,6 @@
 package com.pepej.gungame.menu;
 
+import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.service.ArenaService;
 import com.pepej.gungame.service.UserService;
 import com.pepej.papi.item.ItemStackBuilder;
@@ -26,12 +27,14 @@ public class ArenaSelectorMenu extends Menu {
 
 
     private static final MenuScheme ARENAS_SCHEME = new MenuScheme()
-            .mask("111101111");
+            .mask("001111100")
+            .mask("001111100");
     private static final MenuScheme RANDOM_JOIN_SCHEME = new MenuScheme()
+            .maskEmpty(2)
             .mask("000010000");
 
     public ArenaSelectorMenu(final Player player) {
-        super(player, 1, "Выбор арены");
+        super(player, 3, "Выбор арены");
         this.arenaService = Services.load(ArenaService.class);
         this.userService = Services.load(UserService.class);
     }
@@ -44,10 +47,18 @@ public class ArenaSelectorMenu extends Menu {
                                            .nameClickable("&aСлучайная арена")
                                            .buildConsumer(e -> {
                                                e.getWhoClicked().closeInventory();
-                                               arenaService.getMostRelevantArena()
-                                                           .ifPresent(a -> userService
-                                                                   .getUserByPlayer((Player) e.getWhoClicked())
-                                                                   .ifPresent(a::join));
+                                               arenaService.getMostRelevantArena().flatMap(a -> userService
+                                                       .getUserByPlayer((Player) e.getWhoClicked())).ifPresent(p -> {
+                                                   final Arena currentArena = p.getCurrentArena();
+                                                   if (currentArena != null && currentArena.actualToJoin()) {
+                                                       if (currentArena.getState() == WAITING) {
+                                                           currentArena.join(p, Arena.ArenaJoinType.MEMBER);
+                                                       }
+                                                       else {
+                                                           new ArenaJoinTypeSelectorMenu(p.asPlayer(), currentArena).open();
+                                                       }
+                                                   }
+                                               });
 
                                            })
 
@@ -70,8 +81,16 @@ public class ArenaSelectorMenu extends Menu {
                                             format("&7Макс. уровень: %s/12", a.getContext().getMaxUserLevel())
                                     )
                                     .buildConsumer(e -> {
-                                        e.getWhoClicked().closeInventory();
-                                        userService.getUser(e.getWhoClicked().getUniqueId()).ifPresent(a::join);
+                                        Player player = (Player) e.getWhoClicked();
+                                        userService.getUserByPlayer(player).ifPresent(user -> {
+                                            if (a.actualToJoin()) {
+                                                if (a.getState() == WAITING) {
+                                                    a.join(user, Arena.ArenaJoinType.MEMBER);
+                                                } else {
+                                                    new ArenaJoinTypeSelectorMenu(getPlayer(), a).open();
+                                                }
+                                            }
+                                        });
                                     })
             );
         });

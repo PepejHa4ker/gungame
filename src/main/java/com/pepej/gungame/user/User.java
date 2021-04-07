@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class User  {
     private final UUID id;
     private final String username;
+    private boolean spectator;
     private boolean died;
     private int gamesPlayed;
     private int deaths;
@@ -67,6 +68,7 @@ public class User  {
             player.teleport(pos.toLocation());
         }
     }
+
 
 
 

@@ -2,10 +2,11 @@ package com.pepej.gungame.api;
 
 import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.equipment.EquipmentResolver;
-import com.pepej.gungame.rpg.trap.TrapBase;
+import com.pepej.gungame.rpg.trap.Trap;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.scoreboard.Scoreboard;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
+import com.pepej.papi.serialize.Point;
 import com.pepej.papi.serialize.Region;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,7 +24,7 @@ public interface Arena extends Runnable {
                 this.getState() != ArenaState.DISABLED;
     }
 
-    void updateScoreboard(User user, ScoreboardObjective objective);
+    void updateMemberScoreboard(User user, ScoreboardObjective objective);
 
     void enable();
 
@@ -35,7 +36,7 @@ public interface Arena extends Runnable {
 
     void resetTimers();
 
-    void join(@NonNull User user);
+    void join(@NonNull User user, ArenaJoinType joinType);
 
     void leave(@NonNull User user, ArenaLeaveCause cause);
 
@@ -46,6 +47,8 @@ public interface Arena extends Runnable {
 
     @NonNull
     World getWorld();
+
+    Point getRandomPositionToSpawn();
 
     @NonNull
     ArenaState getState();
@@ -64,7 +67,7 @@ public interface Arena extends Runnable {
 
         @NonNull Set<User> getUsers();
 
-        @NonNull Map<Region, TrapBase> getTraps();
+        @NonNull Map<Region, Trap> getTraps();
 
         int getMaxUserLevel();
 
@@ -72,6 +75,13 @@ public interface Arena extends Runnable {
             return this.getUsers().size();
         }
 
+    }
+
+    @AllArgsConstructor
+    @Getter
+    enum ArenaJoinType {
+        SPECTATOR,
+        MEMBER
     }
 
     @AllArgsConstructor

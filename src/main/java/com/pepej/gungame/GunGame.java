@@ -1,5 +1,6 @@
 package com.pepej.gungame;
 
+import com.pepej.gungame.api.trap.TrapHandler;
 import com.pepej.gungame.arena.loader.ArenaLoader;
 import com.pepej.gungame.arena.loader.SimpleArenaLoader;
 import com.pepej.gungame.equipment.EquipmentResolver;
@@ -87,6 +88,7 @@ public class GunGame extends PapiJavaPlugin {
         provideService(ArenaLoader.class, arenaLoader);
         final HologramLoader hologramLoader = new HologramLoaderImpl(getBundledFile("holograms.json"));
         provideService(HologramLoader.class, hologramLoader);
+        provideService(TrapHandler.class);
         bindModule(new Listener());
         bindModule(new CommandRegister());
         hologramLoader.loadAndRegisterAllArenas();

@@ -34,7 +34,7 @@ public class SuperBowTrap extends TrapBase {
         final MetadataMap metadataMap = Metadata.provideForPlayer(player);
         final int superShots = metadataMap.getOrDefault(Metadatas.SUPER_SHOTS, 0);
         metadataMap.put(Metadatas.SUPER_SHOTS, superShots + 1);
-        player.getInventory().addItem(SUPER_BOW);
+        player.getInventory().setItem(1, SUPER_BOW);
         player.getInventory().addItem(SUPER_ARROW);
 
 

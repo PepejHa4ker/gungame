@@ -4,6 +4,7 @@ public enum TrapType {
 
     POISON_ARENA(45, PoisonTrap.class),
     SUPER_BOW(90, SuperBowTrap.class),
+    DEATH_JAIL(120,DeathJailTrap.class),
     ;
 
     private final int delayInSeconds;

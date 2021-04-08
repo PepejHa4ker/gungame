@@ -26,7 +26,6 @@ import com.pepej.papi.serialize.Point;
 import com.pepej.papi.serialize.Position;
 import com.pepej.papi.serialize.Region;
 import com.pepej.papi.services.Services;
-import com.pepej.papi.terminable.TerminableConsumer;
 import com.pepej.papi.terminable.composite.CompositeTerminable;
 import com.pepej.papi.utils.Log;
 import com.pepej.papi.utils.Players;
@@ -69,7 +68,7 @@ import static java.util.stream.Collectors.toMap;
 @EqualsAndHashCode
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Getter
-public class SingleArena implements Arena, TerminableConsumer {
+public class SingleArena implements Arena {
 
     @NonFinal
     long timer;
@@ -103,12 +102,12 @@ public class SingleArena implements Arena, TerminableConsumer {
         this.questService = Services.load(QuestService.class);
         this.trapHandler = user -> {
             final Position position = Position.of(user.location());
-            context.getTraps().entrySet().stream()
-                 .filter(e -> e.getKey().inRegion(position))
-                 .findFirst()
-                 .map(Map.Entry::getValue)
-                 .filter(trap -> trap.getCooldown().test())
-                 .ifPresent(t -> t.onActivate(user, this));
+            getContext().getTraps().entrySet().stream()
+                        .filter(e -> e.getKey().inRegion(position))
+                        .findFirst()
+                        .map(Map.Entry::getValue)
+                        .filter(trap -> trap.getCooldown().test())
+                        .ifPresent(t -> t.onActivate(user, this));
         };
         resetTimers();
 
@@ -347,12 +346,14 @@ public class SingleArena implements Arena, TerminableConsumer {
                 setStatus(ArenaState.STARTING);
 
 
-            } else if (state == ArenaState.STARTED) {
+            }
+            else if (state == ArenaState.STARTED) {
                 context.getEquipmentResolver().equipUser(user, context.getEquipmentResolver().resolve(1));
                 Point spawn = getRandomPositionToSpawn();
                 user.teleport(spawn);
             }
-        } else {
+        }
+        else {
             user.teleport(context.getConfig().getStartPosition());
             user.setSpectator(true);
             Schedulers.sync().run(() -> context.getUsers().stream()
@@ -460,8 +461,8 @@ public class SingleArena implements Arena, TerminableConsumer {
                             return;
                         }
                         MetadataMap attackerMeta = Metadata.provideForPlayer(attacker);
-                        attackerMeta.forcePut(CAN_BE_ATTACKED_KEY, ExpiringValue.of(true, 10, TimeUnit.SECONDS));
                         MetadataMap victimMeta = Metadata.provideForPlayer(victim);
+                        attackerMeta.forcePut(CAN_BE_ATTACKED_KEY, ExpiringValue.of(true, 10, TimeUnit.SECONDS));
                         if (victimMeta.getOrDefault(CAN_BE_ATTACKED_KEY, true)) {
                             victimMeta.forcePut(LAST_ATTACKER_KEY, ExpiringValue.of(attacker.getUniqueId(), 15, TimeUnit.SECONDS));
                         }
@@ -487,6 +488,7 @@ public class SingleArena implements Arena, TerminableConsumer {
                     event.setDeathMessage("");
                     User dead = userService.getUserByPlayerNullable(event.getEntity());
                     MetadataMap metadataMap = Metadata.provideForPlayer(event.getEntity());
+                    metadataMap.remove(JAIL_TRAP);
                     Promise.start()
                            .thenApplySync($ -> userService.getUserByPlayerNullable(event.getEntity()))
                            .thenAcceptSync(user -> user.setDeaths(user.getDeaths() + 1))
@@ -649,7 +651,8 @@ public class SingleArena implements Arena, TerminableConsumer {
             this.scoreboard = scoreboard;
             this.arenaStartDuration = config.getArenaStartDelay();
             this.equipmentResolver = equipmentResolver;
-            this.users = Collections.newSetFromMap(new ConcurrentHashMap<>(config.getMaxPlayers()));; //pre-initialize set capacity to max possible users per arena
+            this.users = Collections.newSetFromMap(new ConcurrentHashMap<>(config.getMaxPlayers()));
+            ; //pre-initialize set capacity to max possible users per arena
             this.userService = Services.load(UserService.class);
             this.traps = config.getTraps().stream().collect(toMap(GunGameTrap::getRegion, t -> trapService.createTrapByType(t.getType())));
 

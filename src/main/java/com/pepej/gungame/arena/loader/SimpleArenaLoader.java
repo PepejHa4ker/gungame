@@ -4,18 +4,13 @@ import com.pepej.gungame.api.Arena;
 import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.arena.SingleArena;
 import com.pepej.gungame.equipment.EquipmentResolver;
-import com.pepej.gungame.rpg.trap.PoisonTrap;
-import com.pepej.gungame.rpg.trap.SuperBowTrap;
-import com.pepej.gungame.rpg.trap.Trap;
 import com.pepej.gungame.service.ArenaService;
-import com.pepej.gungame.service.ScoreboardService;
+import com.pepej.gungame.service.TrapService;
 import com.pepej.papi.Papi;
 import com.pepej.papi.config.ConfigFactory;
 import com.pepej.papi.config.ConfigurationNode;
 import com.pepej.papi.scoreboard.Scoreboard;
 import com.pepej.papi.scoreboard.ScoreboardProvider;
-import com.pepej.papi.serialize.Position;
-import com.pepej.papi.serialize.Region;
 import com.pepej.papi.services.Service;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -27,9 +22,7 @@ import org.bukkit.World;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @ToString
@@ -53,7 +46,7 @@ public class SimpleArenaLoader implements ArenaLoader {
 
     @Service
     @NonFinal
-    ScoreboardService scoreboardService;
+    TrapService trapService;
 
     public SimpleArenaLoader(@NonNull File file) {
         this.file = file;
@@ -87,6 +80,7 @@ public class SimpleArenaLoader implements ArenaLoader {
         if (arenaConfigs == null) {
             return;
         }
+        arenaConfigs.removeIf(it -> it.getArenaId().equals(config.getArenaId()));
         arenaConfigs.add(config);
         node.setList(ArenaConfig.class, arenaConfigs);
         ConfigFactory.gson().save(file, node);
@@ -112,16 +106,10 @@ public class SimpleArenaLoader implements ArenaLoader {
 
     private void registerArenaFromConfig(@NonNull ArenaConfig config) {
         Scoreboard scoreboard = scoreboardProvider.getScoreboard();
-        scoreboardService.register(config.getArenaId(), scoreboard);
         World world = Papi.worldNullable(config.getArenaWorld());
         Objects.requireNonNull(world, "world");
-        Map<Region, Trap> trapMap = new HashMap<>();
-
-        final Position first = Position.of(298, 99, -247.5, "pepej");
-        final Position second = Position.of(292, 103, -253, "pepej");
-        trapMap.put(Region.of(first, second), new PoisonTrap());
-        trapMap.put(Region.of(first, second), new SuperBowTrap());
-        final Arena arena = new SingleArena(world, new SingleArena.SingleArenaContext(config, scoreboard, equipmentResolver, trapMap));
-        arenaService.register(arena);
+        arenaService.unregister(config.getArenaId());
+        final Arena newArena = new SingleArena(world, new SingleArena.SingleArenaContext(config, scoreboard, equipmentResolver));
+        arenaService.register(newArena);
     }
 }

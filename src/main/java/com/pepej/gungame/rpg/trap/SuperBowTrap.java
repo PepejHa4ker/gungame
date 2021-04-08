@@ -20,6 +20,8 @@ public class SuperBowTrap extends TrapBase {
                                                                .build();
     public static final ItemStack SUPER_ARROW = ItemStackBuilder.of(Material.ARROW)
                                                                 .name("&dСупер стрела для супер лука")
+                                                                .lore("&7Эта стреля обладает разумом")
+                                                                .lore("&7Она будет возвращаться к Вам до тех пор, пока не настигнет цели")
                                                                 .build();
 
     public SuperBowTrap() {

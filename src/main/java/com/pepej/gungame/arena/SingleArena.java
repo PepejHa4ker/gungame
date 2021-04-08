@@ -2,13 +2,15 @@ package com.pepej.gungame.arena;
 
 import com.pepej.gungame.GunGame;
 import com.pepej.gungame.api.Arena;
-import com.pepej.gungame.api.trap.TrapHandler;
 import com.pepej.gungame.equipment.EquipmentResolver;
 import com.pepej.gungame.model.Armor;
 import com.pepej.gungame.repository.UserRepository;
 import com.pepej.gungame.rpg.quest.QuestType;
+import com.pepej.gungame.rpg.trap.GunGameTrap;
 import com.pepej.gungame.rpg.trap.Trap;
+import com.pepej.gungame.rpg.trap.handler.TrapHandler;
 import com.pepej.gungame.service.QuestService;
+import com.pepej.gungame.service.TrapService;
 import com.pepej.gungame.service.UserService;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.metadata.ExpiringValue;
@@ -21,6 +23,7 @@ import com.pepej.papi.scheduler.Schedulers;
 import com.pepej.papi.scoreboard.Scoreboard;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
 import com.pepej.papi.serialize.Point;
+import com.pepej.papi.serialize.Position;
 import com.pepej.papi.serialize.Region;
 import com.pepej.papi.services.Services;
 import com.pepej.papi.terminable.TerminableConsumer;
@@ -60,6 +63,7 @@ import static com.pepej.gungame.listener.Listener.QUEST_SELECTOR;
 import static com.pepej.gungame.utils.DonatUtils.applyIfVip;
 import static com.pepej.papi.events.Events.subscribe;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toMap;
 
 @ToString
 @EqualsAndHashCode
@@ -97,7 +101,15 @@ public class SingleArena implements Arena, TerminableConsumer {
         this.compositeTerminable = CompositeTerminable.create();
         this.userService = Services.load(UserService.class);
         this.questService = Services.load(QuestService.class);
-        this.trapHandler = Services.load(TrapHandler.class);
+        this.trapHandler = user -> {
+            final Position position = Position.of(user.location());
+            context.getTraps().entrySet().stream()
+                 .filter(e -> e.getKey().inRegion(position))
+                 .findFirst()
+                 .map(Map.Entry::getValue)
+                 .filter(trap -> trap.getCooldown().test())
+                 .ifPresent(t -> t.onActivate(user, this));
+        };
         resetTimers();
 
     }
@@ -284,7 +296,7 @@ public class SingleArena implements Arena, TerminableConsumer {
                     stop();
                 }
                 for (User user : context.getUsers()) {
-                    trapHandler.handle(user, this);
+                    trapHandler.handle(user);
                 }
                 context.getUsers().stream()
                        .filter(user -> user.getLocalLevelsReached() >= 12)
@@ -619,6 +631,8 @@ public class SingleArena implements Arena, TerminableConsumer {
     @Getter
     public static class SingleArenaContext implements ArenaContext {
 
+        @NonNull
+        TrapService trapService;
         @NonNull EquipmentResolver equipmentResolver;
         @NonNull Duration arenaStartDuration;
         @Setter
@@ -629,17 +643,18 @@ public class SingleArena implements Arena, TerminableConsumer {
         @NonNull Set<User> users;
         @NonNull Map<Region, Trap> traps;
 
-        public SingleArenaContext(final ArenaConfig config, final @NonNull Scoreboard scoreboard, @NonNull final EquipmentResolver equipmentResolver, final @NonNull Map<Region, Trap> traps) {
+        public SingleArenaContext(final ArenaConfig config, final @NonNull Scoreboard scoreboard, @NonNull final EquipmentResolver equipmentResolver) {
+            this.trapService = Services.load(TrapService.class);
             this.config = config;
             this.scoreboard = scoreboard;
             this.arenaStartDuration = config.getArenaStartDelay();
             this.equipmentResolver = equipmentResolver;
-            this.traps = traps;
-            this.users = Collections.newSetFromMap(new ConcurrentHashMap<>(config.getMaxPlayers()));
-            ; //pre-initialize set capacity to max possible users per arena
+            this.users = Collections.newSetFromMap(new ConcurrentHashMap<>(config.getMaxPlayers()));; //pre-initialize set capacity to max possible users per arena
             this.userService = Services.load(UserService.class);
+            this.traps = config.getTraps().stream().collect(toMap(GunGameTrap::getRegion, t -> trapService.createTrapByType(t.getType())));
 
         }
+
 
         @Override
         public int getMaxUserLevel() {

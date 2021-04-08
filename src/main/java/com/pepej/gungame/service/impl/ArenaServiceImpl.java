@@ -27,7 +27,8 @@ public class ArenaServiceImpl implements ArenaService {
     @Override
     public void register(@NonNull Arena arena) {
         if (arenas.stream().anyMatch(a -> a.getContext().getConfig().getArenaId().equals(arena.getContext().getConfig().getArenaId()))) {
-            Log.warn("Arena with id " + arena.getContext().getConfig().getArenaName() + " already register!");
+            arenas.remove(arena);
+            Log.warn("Arena with id " + arena.getContext().getConfig().getArenaId() + " already register!");
             return;
         }
         arenas.add(arena);

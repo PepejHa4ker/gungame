@@ -1,6 +1,7 @@
 package com.pepej.gungame;
 
 import com.pepej.gungame.arena.ArenaConfig;
+import com.pepej.gungame.rpg.trap.TrapSetting;
 import com.pepej.papi.metadata.MetadataKey;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
 
@@ -16,6 +17,8 @@ public final class Metadatas {
     public static final MetadataKey<Boolean> CAN_BE_ATTACKED_KEY = MetadataKey.createBooleanKey("can-be-attacked");
     public static final MetadataKey<ScoreboardObjective> SCOREBOARD_KEY = MetadataKey.create("scoreboard", ScoreboardObjective.class);
     public static final MetadataKey<ArenaConfig.ArenaConfigBuilder> CREATED_ARENA = MetadataKey.create("created-arena", ArenaConfig.ArenaConfigBuilder.class);
+    public static final MetadataKey<TrapSetting> TRAP_SETTING = MetadataKey.create("trap-setting", TrapSetting.class);
+
     public static final MetadataKey<Integer> SUPER_SHOTS = MetadataKey.createIntegerKey("super-shots");
 
 }

@@ -1,11 +1,14 @@
 package com.pepej.gungame.service.impl;
 
+import com.pepej.gungame.rpg.trap.Trap;
 import com.pepej.gungame.rpg.trap.TrapBase;
+import com.pepej.gungame.rpg.trap.TrapType;
 import com.pepej.gungame.service.TrapService;
 import com.pepej.papi.serialize.Position;
 import com.pepej.papi.utils.Log;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.experimental.FieldDefaults;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -15,6 +18,13 @@ import java.util.Set;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class TrapServiceImpl implements TrapService {
+
+    @Override
+    @SneakyThrows
+    public Trap createTrapByType(final TrapType trapType) {
+        Class<? extends Trap> clazz = trapType.getTrapClass();
+        return clazz.getConstructor().newInstance();
+    }
 
     @Getter
     Set<TrapBase> traps;

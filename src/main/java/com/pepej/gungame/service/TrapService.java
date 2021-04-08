@@ -1,6 +1,8 @@
 package com.pepej.gungame.service;
 
+import com.pepej.gungame.rpg.trap.Trap;
 import com.pepej.gungame.rpg.trap.TrapBase;
+import com.pepej.gungame.rpg.trap.TrapType;
 import com.pepej.gungame.service.impl.TrapServiceImpl;
 import com.pepej.papi.serialize.Position;
 import com.pepej.papi.services.Implementor;
@@ -21,4 +23,6 @@ public interface TrapService {
     Optional<TrapBase> getTrap(@NonNull Position position);
 
     @NonNull Set<TrapBase> getTraps();
+
+    Trap createTrapByType(TrapType trapType);
 }

@@ -1,6 +1,5 @@
 package com.pepej.gungame;
 
-import com.pepej.gungame.api.trap.TrapHandler;
 import com.pepej.gungame.arena.loader.ArenaLoader;
 import com.pepej.gungame.arena.loader.SimpleArenaLoader;
 import com.pepej.gungame.equipment.EquipmentResolver;
@@ -18,6 +17,7 @@ import com.pepej.gungame.rpg.bonus.BonusRegistrar;
 import com.pepej.gungame.service.*;
 import com.pepej.gungame.service.impl.HologramTopServiceImpl;
 import com.pepej.gungame.service.impl.UserServiceImpl;
+import com.pepej.papi.Papi;
 import com.pepej.papi.adventure.platform.bukkit.BukkitAudiences;
 import com.pepej.papi.ap.Plugin;
 import com.pepej.papi.ap.PluginDependency;
@@ -67,8 +67,9 @@ public class GunGame extends PapiJavaPlugin {
         }
         provideService(Economy.class, rsp.getProvider());
         this.globalConfig = ConfigFactory.gson().load(getBundledFile("config.json")).get(GlobalConfig.class);
-        provideService(QuestService.class);
         provideService(EquipmentResolver.class);
+        provideService(QuestService.class);
+        provideService(TrapService.class);
         provideService(NpcService.class);
         final NpcLoader npcLoader = new NpcLoaderImpl(getBundledFile("npcs.json"));
         provideService(NpcLoader.class, npcLoader);
@@ -80,16 +81,16 @@ public class GunGame extends PapiJavaPlugin {
         provideService(LuckPerms.class, LuckPermsProvider.get());
         provideService(ArenaService.class);
         provideService(BukkitAudiences.class, bind(BukkitAudiences.create(this)));
-        provideService(ScoreboardService.class);
-        provideService(TrapService.class);
         provideService(UserService.class, bindModule(new UserServiceImpl()));
         provideService(HologramTopService.class, bindModule(new HologramTopServiceImpl()));
         final ArenaLoader arenaLoader = new SimpleArenaLoader(getBundledFile("arenas.json"));
         provideService(ArenaLoader.class, arenaLoader);
         final HologramLoader hologramLoader = new HologramLoaderImpl(getBundledFile("holograms.json"));
         provideService(HologramLoader.class, hologramLoader);
-        provideService(TrapHandler.class);
-        bindModule(new Listener());
+        final Listener module = new Listener();
+
+        Papi.server().getPluginManager().registerEvents(module, this);
+        bindModule(module);
         bindModule(new CommandRegister());
         hologramLoader.loadAndRegisterAllArenas();
         arenaLoader.loadAndRegisterAllArenas();

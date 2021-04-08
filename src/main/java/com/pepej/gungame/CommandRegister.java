@@ -8,6 +8,9 @@ import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.arena.loader.ArenaLoader;
 import com.pepej.gungame.menu.ArenaSelectorMenu;
 import com.pepej.gungame.menu.QuestSelectorMenu;
+import com.pepej.gungame.rpg.trap.GunGameTrap;
+import com.pepej.gungame.rpg.trap.TrapSetting;
+import com.pepej.gungame.rpg.trap.TrapType;
 import com.pepej.gungame.service.ArenaService;
 import com.pepej.gungame.service.UserService;
 import com.pepej.gungame.user.User;
@@ -22,6 +25,8 @@ import com.pepej.papi.promise.Promise;
 import com.pepej.papi.protocol.Protocol;
 import com.pepej.papi.scheduler.Schedulers;
 import com.pepej.papi.serialize.Point;
+import com.pepej.papi.serialize.Position;
+import com.pepej.papi.serialize.Region;
 import com.pepej.papi.services.Services;
 import com.pepej.papi.terminable.TerminableConsumer;
 import com.pepej.papi.terminable.module.TerminableModule;
@@ -31,9 +36,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -143,12 +146,53 @@ public class CommandRegister implements TerminableModule {
                                                                               .requiredPlayersToStart(4)
                                                                               .arenaStartDelay(Duration.ofSeconds(20))
                                                                               .positions(new ArrayList<>())
+                                                                              .traps(new ArrayList<>())
                                                                               .arenaId(arena);
                     metadataMap.put(Metadatas.CREATED_ARENA, builder);
 
                     userService.getUserByPlayer(context.sender()).ifPresent(u -> userService.sendMessage(u, "&aВведите имя арены"));
                 })
                 .registerAndBind(consumer, "create");
+        Commands.create()
+                .assertUsage("<arena> <trap>")
+                .assertPlayer()
+                .description("Add new trap")
+                .assertPermission("gungame.admin")
+                .tabHandler(context -> {
+                    if (context.args().size() <= 1) {
+                        return arenaService.getArenas().stream().map(a -> a.getContext().getConfig().getArenaId()).collect(toList());
+                    } else {
+                        return Arrays.stream(TrapType.values()).map(TrapType::name).map(String::toLowerCase).collect(toList());
+                    }
+                })
+                .handler(context -> {
+                    String arenaId = context.arg(0).parseOrFail(String.class);
+                    final Arena arena = arenaService.getArenaNullable(arenaId);
+                    if (arena == null) {
+                        context.replyError("Арена с текущим id не найдена");
+                        return;
+                    }
+                    final MetadataMap metadataMap = Metadata.provideForPlayer(context.sender());
+                    final TrapType trapType = TrapType.valueOf(context.arg(1).parseOrFail(String.class).toUpperCase(Locale.ROOT));
+                    final Position position = Position.of(context.sender().getLocation());
+                    final TrapSetting trapSetting = metadataMap.getOrDefault(Metadatas.TRAP_SETTING, new TrapSetting(trapType, null, null));
+                    if (trapSetting.getFirst() != null) {
+                        final Position firstPosition = trapSetting.getFirst();
+                        final ArenaConfig config = arena.getContext().getConfig();
+                        final Region region = Region.of(firstPosition, position);
+                        config.getTraps().add(new GunGameTrap(trapType, region));
+                        arenaLoader.loadAndSaveArenaFromConfig(config);
+                        context.replyAnnouncement("Вы успешно добавили ловушку на арену");
+                        metadataMap.remove(Metadatas.TRAP_SETTING);
+                    } else {
+                        trapSetting.setFirst(position);
+                        metadataMap.put(Metadatas.TRAP_SETTING, trapSetting);
+                        context.replyAnnouncement("Первая точка успешно добавлена! Встаньте в другую точку и пропишите эту команду еще раз");
+                    }
+
+
+                })
+                .registerAndBind(consumer, "addtrap");
         Commands.create()
                 .assertPlayer()
                 .assertUsage("<arena>")

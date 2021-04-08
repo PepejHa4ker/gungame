@@ -25,6 +25,7 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -49,11 +50,29 @@ import static com.pepej.papi.text.Text.decolorize;
 import static java.lang.String.format;
 
 
-public class Listener implements TerminableModule {
+public class Listener implements TerminableModule, org.bukkit.event.Listener {
+
+
+    @EventHandler
+    public void onEvent(PlayerInteractEvent event) {
+
+        if (event.hasItem()) {
+            ItemStack itemStack = event.getItem();
+            if (itemStack.isSimilar(QUEST_SELECTOR)) {
+                new QuestSelectorMenu(event.getPlayer()).open();
+                event.setCancelled(true);
+            } else if (itemStack.isSimilar(ARENA_SELECTOR)) {
+                new ArenaSelectorMenu(event.getPlayer()).open();
+                event.setCancelled(true);
+
+            }
+        }
+    }
 
     public static final Consumer<Cancellable> CANCELLED = e -> e.setCancelled(true);
 
-    public static final ItemStack ARENA_SELECTOR = ItemStackBuilder.head("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzdlOGNiNTdmZTc5MGU5NjVlM2NmYTZjNGZiYzE2ZTMyMjYyMTBkNjVmNTYxNGU4ODUzZmE5ZmI4NDA3NDQ0MSJ9fX0=")
+    public static final ItemStack ARENA_SELECTOR =
+            ItemStackBuilder.head("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzdlOGNiNTdmZTc5MGU5NjVlM2NmYTZjNGZiYzE2ZTMyMjYyMTBkNjVmNTYxNGU4ODUzZmE5ZmI4NDA3NDQ0MSJ9fX0=")
                                                                    .nameClickable("&aВыбор арены")
                                                                    .build();
     public static final ItemStack QUEST_SELECTOR = ItemStackBuilder.head("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWQ5Y2M1OGFkMjVhMWFiMTZkMzZiYjVkNmQ0OTNjOGY1ODk4YzJiZjMwMmI2NGUzMjU5MjFjNDFjMzU4NjcifX19=")
@@ -170,20 +189,19 @@ public class Listener implements TerminableModule {
                 .filter(playerIsNotOp())
                 .handler(CANCELLED)
                 .bindWith(terminableConsumer);
-        subscribe(PlayerInteractEvent.class)
-                .filter(e -> e.hasItem() && ARENA_SELECTOR.equals(e.getItem()))
-                .handler(e -> {
-                    new ArenaSelectorMenu(e.getPlayer()).open();
-                    e.setCancelled(true);
-                })
-                .bindWith(terminableConsumer);
-        subscribe(PlayerInteractEvent.class)
-                .filter(e -> e.hasItem() && QUEST_SELECTOR.equals(e.getItem()))
-                .handler(e -> {
-                    new QuestSelectorMenu(e.getPlayer()).open();
-                    e.setCancelled(true);
-                })
-                .bindWith(terminableConsumer);
+//        subscribe(PlayerInteractEvent.class, EventPriority.HIGHEST)
+//                .filter(e -> ARENA_SELECTOR.equals(e.getItem()))
+//                .handler(e -> {
+//
+//                })
+//                .bindWith(terminableConsumer);
+//        subscribe(PlayerInteractEvent.class, EventPriority.HIGHEST)
+//                .filter(e -> e.getItem() != null && QUEST_SELECTOR.equals(e.getItem()))
+//                .handler(e -> {
+//                    new QuestSelectorMenu(e.getPlayer()).open();
+//                    e.setCancelled(true);
+//                })
+//                .bindWith(terminableConsumer);
         subscribe(FoodLevelChangeEvent.class)
                 .handler(CANCELLED)
                 .bindWith(terminableConsumer);

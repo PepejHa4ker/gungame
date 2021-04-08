@@ -1,6 +1,7 @@
 package com.pepej.gungame.arena;
 
 
+import com.pepej.gungame.rpg.trap.GunGameTrap;
 import com.pepej.papi.config.objectmapping.ConfigSerializable;
 import com.pepej.papi.config.objectmapping.meta.Setting;
 import com.pepej.papi.serialize.Point;
@@ -21,6 +22,9 @@ public class ArenaConfig {
 
     @Setting
     String arenaId;
+
+    @Setting
+    List<GunGameTrap> traps;
 
     @Setting
     Point startPosition;

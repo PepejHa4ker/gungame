@@ -26,6 +26,7 @@ import com.pepej.papi.serialize.Point;
 import com.pepej.papi.serialize.Position;
 import com.pepej.papi.serialize.Region;
 import com.pepej.papi.services.Services;
+import com.pepej.papi.terminable.TerminableConsumer;
 import com.pepej.papi.terminable.composite.CompositeTerminable;
 import com.pepej.papi.utils.Log;
 import com.pepej.papi.utils.Players;
@@ -674,6 +675,7 @@ public class SingleArena implements Arena {
             ; //pre-initialize set capacity to max possible users per arena
             this.userService = Services.load(UserService.class);
             this.traps = config.getTraps().stream().collect(toMap(GunGameTrap::getRegion, t -> trapService.createTrapByType(t.getType())));
+            this.traps.values().forEach(trap -> trap.bindWith((TerminableConsumer) this));
 
         }
 

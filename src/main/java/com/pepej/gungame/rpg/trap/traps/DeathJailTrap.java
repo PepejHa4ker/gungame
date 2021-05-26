@@ -60,7 +60,7 @@ public class DeathJailTrap extends TrapBase {
         bossBar.addPlayer(player);
         bossBar.title("&aДо вашей смерти осталось:&c " + metadataMap.getOrDefault(JAIL_TRAP_DEATH_TIMER, 15) + "&a секунд")
                .color(BossBarColor.RED)
-               .bindWith(arena);
+               .bindWith(this);
 
         Schedulers.sync()
                   .runRepeating(task -> {
@@ -88,12 +88,12 @@ public class DeathJailTrap extends TrapBase {
                           }
                       }
                   }, 0, 20)
-                  .bindWith(arena);
+                  .bindWith(this);
         subscribe(PlayerMoveEvent.class, EventPriority.HIGHEST)
                 .filter(eventFilter(getUserService(), arena))
                 .filter(EventFilters.playerHasMetadata(JAIL_TRAP))
                 .handler(e -> e.setCancelled(true))
-                .bindWith(arena);
+                .bindWith(this);
         subscribe(AsyncPlayerChatEvent.class)
                 .filter(eventFilter(getUserService(), arena))
                 .filter(EventFilters.playerHasMetadata(JAIL_TRAP))
@@ -117,7 +117,7 @@ public class DeathJailTrap extends TrapBase {
                     }
 
                 })
-                .bindWith(arena);
+                .bindWith(this);
         subscribe(PlayerInteractAtEntityEvent.class)
                 .filter(eventFilter(getUserService(), arena))
                 .filter(e -> e.getRightClicked() instanceof Player)
@@ -137,7 +137,7 @@ public class DeathJailTrap extends TrapBase {
                     rightClickedMeta.remove(JAIL_TRAP_DEATH_TIMER);
                     rightClickedMeta.remove(IS_WAITING_HELP);
                 })
-                .bindWith(arena);
+                .bindWith(this);
 
         subscribe(EntityDamageByEntityEvent.class, EventPriority.HIGH)
                 .filter(e -> (e.getDamager() instanceof Player) && (e.getEntity() instanceof Player))
@@ -154,7 +154,7 @@ public class DeathJailTrap extends TrapBase {
                         }
                     }
                 })
-                .bindWith(arena);
+                .bindWith(this);
 
     }
 

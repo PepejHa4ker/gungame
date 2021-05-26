@@ -51,7 +51,8 @@ public class FireworkSmokeTrap extends TrapBase {
                           }
 
                       }
-                  }, 0, 1);
+                  }, 0, 1)
+                  .bindWith(this);
 
     }
 }

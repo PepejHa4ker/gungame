@@ -3,7 +3,6 @@ package com.pepej.gungame.api;
 import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.equipment.EquipmentResolver;
 import com.pepej.gungame.rpg.trap.Trap;
-import com.pepej.gungame.service.UserService;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.scoreboard.Scoreboard;
 import com.pepej.papi.scoreboard.ScoreboardObjective;
@@ -13,14 +12,12 @@ import com.pepej.papi.terminable.TerminableConsumer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bukkit.World;
-import org.bukkit.event.player.PlayerEvent;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 public interface Arena extends Runnable, TerminableConsumer {
 
@@ -34,6 +31,9 @@ public interface Arena extends Runnable, TerminableConsumer {
     void enable();
 
     void disable();
+
+
+
 
     void start();
 
@@ -98,6 +98,7 @@ public interface Arena extends Runnable, TerminableConsumer {
         WAITING("Ожидание игроков"),
         DISABLED("Оффлайн"),
         STARTING("Игра начинается"),
+        PRE_STOPPING("Пред перезагрука"),
         STOPPING("Перезагрузка"),
         STARTED("В игре");
 

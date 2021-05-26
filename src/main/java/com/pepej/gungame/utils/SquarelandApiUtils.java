@@ -32,8 +32,8 @@ public final class SquarelandApiUtils {
 
                 connection.connect();
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
+                    String line = reader.readLine();
+                    if (line != null) {
                         final JsonObject object = GsonProvider.parser().parse(line).getAsJsonObject();
                         GameProfile profile = new GameProfile(UndashedUuids.fromString(object.get("id").getAsString()), object.get("name").getAsString());
                         profile.getProperties().put("textures", new Property("textures", object.get("properties").getAsJsonArray().get(0).getAsJsonObject().get("value").getAsString(), ""));

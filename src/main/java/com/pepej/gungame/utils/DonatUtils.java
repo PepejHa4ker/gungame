@@ -7,21 +7,21 @@ import java.util.function.Consumer;
 
 public final class DonatUtils {
 
-    public static void applyIfHasPermission(Player user, String permission, Consumer<? super Player> action) {
+    public static void applyIfHasPermission(Player user, String permission, Consumer<Player> action) {
         Chain.start(user)
              .applyIf(p -> p.hasPermission(permission), action);
     }
 
 
 
-    public static void applyIfVip(Player user, Consumer<? super Player> action) {
+    public static void applyIfVip(Player user, Consumer<Player> action) {
         applyIfHasPermission(user, "gungame.vip", action);
     }
 
-    public static void applyIfPremium(Player user, Consumer<? super Player> action) {
+    public static void applyIfPremium(Player user, Consumer<Player> action) {
         applyIfHasPermission(user, "gungame.premium", action);
     }
-    public static void applyIfGrand(Player user, Consumer<? super Player> action) {
+    public static void applyIfGrand(Player user, Consumer<Player> action) {
         applyIfHasPermission(user, "gungame.grand", action);
     }
 }

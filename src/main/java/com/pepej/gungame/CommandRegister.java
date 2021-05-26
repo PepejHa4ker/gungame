@@ -30,8 +30,10 @@ import com.pepej.papi.serialize.Region;
 import com.pepej.papi.services.Services;
 import com.pepej.papi.terminable.TerminableConsumer;
 import com.pepej.papi.terminable.module.TerminableModule;
+import com.pepej.papi.utils.GeometryUtils;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
@@ -106,17 +108,12 @@ public class CommandRegister implements TerminableModule {
                     AtomicInteger counter = new AtomicInteger(40);
                     Schedulers.async()
                               .runRepeating(task -> {
-                                  counter.getAndDecrement();
-                                  if (counter.get() <= 0) {
+                                  if (counter.getAndDecrement() <= 0 || !context.sender().isOnline()) {
                                       task.close();
                                   }
                                   for (Point point : config.getPositions()) {
                                       Location location = point.toLocation();
-                                      PacketContainer packetContainer = new PacketContainer(PacketType.Play.Server.WORLD_PARTICLES);
-                                      packetContainer.getModifier().writeDefaults();
-                                      packetContainer.getParticles().write(0, EnumWrappers.Particle.BARRIER);
-                                      packetContainer.getFloat().write(0, (float) location.getX()).write(1, (float) location.getY()).write(2, (float) location.getZ());
-                                      Protocol.sendPacket(context.sender(), packetContainer);
+                                      spawnBarrier(context.sender(), location);
                                   }
                               }, 5,5)
                               .bindWith(consumer);
@@ -124,6 +121,39 @@ public class CommandRegister implements TerminableModule {
 
                 })
                 .registerAndBind(consumer, "spawns");
+        Commands.create()
+                .assertPlayer()
+                .assertUsage("<arena>")
+                .description("View arena traps")
+                .assertPermission("gungame.admin")
+                .assertCooldown(10, TimeUnit.SECONDS)
+                .tabHandler(context -> arenaService.getArenas().stream().map(a -> a.getContext().getConfig().getArenaId()).collect(toList()))
+                .handler(context -> {
+                    Arena arena = arenaService.getArenaNullable(context.arg(0).parseOrFail(String.class));
+                    if (arena == null) {
+                        context.replyError("Арена не найдена");
+                        return;
+                    }
+                    final Set<Region> trapRegions = arena.getContext().getTraps().keySet();
+                    AtomicInteger counter = new AtomicInteger(40);
+                    Schedulers.async()
+                              .runRepeating(task -> {
+                                  if (counter.getAndDecrement() <= 0 || !context.sender().isOnline()) {
+                                      task.close();
+                                  }
+                                  for (Region region : trapRegions) {
+                                      final List<Location> locations = GeometryUtils.getAllFaces(region.getMin(), region.getMax(), region.getWorld());
+                                      for (Location location : locations) {
+                                          spawnBarrier(context.sender(), location);
+                                      }
+
+                                  }
+                              }, 5,5)
+                              .bindWith(consumer);
+
+
+                })
+                .registerAndBind(consumer, "traps");
         Commands.create()
                 .assertPlayer()
                 .assertUsage("<arena>")
@@ -264,6 +294,18 @@ public class CommandRegister implements TerminableModule {
                     });
                 })
                 .register("stats", "стата", "statistics", "статистика", "данные");
+    }
+
+    private static void spawnBarrier(final Player player, final Location location) {
+        PacketContainer packetContainer = new PacketContainer(PacketType.Play.Server.WORLD_PARTICLES);
+        packetContainer.getModifier().writeDefaults();
+        packetContainer.getParticles().write(0, EnumWrappers.Particle.BARRIER);
+        packetContainer.getFloat()
+                       .write(0, (float) location.getX()) //x
+                       .write(1, (float) location.getY()) //y
+                       .write(2, (float) location.getZ()); //z
+        packetContainer.getBooleans().write(0, true); //longDistance field
+        Protocol.sendPacket(player, packetContainer);
     }
 
 

@@ -1,6 +1,7 @@
 package com.pepej.gungame.rpg.quest;
 
 import com.pepej.gungame.user.User;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -39,6 +40,8 @@ public interface Quest {
     double getReward();
 
     boolean tryComplete(User user);
+
+    void preComplete(@NotNull User user);
 
     void complete(User user);
 

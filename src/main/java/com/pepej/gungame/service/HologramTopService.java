@@ -13,9 +13,6 @@ public interface HologramTopService {
 
     Map<TopStrategy, GunGameHologram> getHolograms();
 
-
-
-
     @Getter
     enum TopStrategy {
         KILLS("Убийство", "Убийства", "Убийств"),

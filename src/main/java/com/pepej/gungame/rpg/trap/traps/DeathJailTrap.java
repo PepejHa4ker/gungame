@@ -1,7 +1,11 @@
-package com.pepej.gungame.rpg.trap;
+package com.pepej.gungame.rpg.trap.traps;
 
 import com.pepej.gungame.Metadatas;
 import com.pepej.gungame.api.Arena;
+import com.pepej.gungame.rpg.quest.QuestType;
+import com.pepej.gungame.rpg.trap.TrapBase;
+import com.pepej.gungame.rpg.trap.TrapType;
+import com.pepej.gungame.service.QuestService;
 import com.pepej.gungame.service.UserService;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.bossbar.BossBar;
@@ -19,6 +23,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -31,9 +36,12 @@ import static java.lang.String.format;
 
 public class DeathJailTrap extends TrapBase {
 
+    private final QuestService questService;
+
 
     public DeathJailTrap() {
         super("death jail", TrapType.DEATH_JAIL);
+        this.questService = Services.load(QuestService.class);
     }
 
     @Override
@@ -48,6 +56,44 @@ public class DeathJailTrap extends TrapBase {
         getUserService().sendMessage(user, "&aВы должны написать 3 раза &c\"Памагити\"&a чтобы выбраться");
         getUserService().broadcastMessage(arena, format("&a%s&e попался в тюремную ловушку!", user.getUsername()));
         BossBarFactory factory = Services.load(BossBarFactory.class);
+        final BossBar bossBar = factory.newBossBar();
+        bossBar.addPlayer(player);
+        bossBar.title("&aДо вашей смерти осталось:&c " + metadataMap.getOrDefault(JAIL_TRAP_DEATH_TIMER, 15) + "&a секунд")
+               .color(BossBarColor.RED)
+               .bindWith(arena);
+
+        Schedulers.sync()
+                  .runRepeating(task -> {
+                      if (!metadataMap.has(JAIL_TRAP) || !player.isOnline()) {
+                          task.stop();
+                          bossBar.close();
+                          Players.resetWalkSpeed(player);
+                          Players.resetFlySpeed(player);
+                          player.removePotionEffect(PotionEffectType.JUMP);
+                      }
+                      else {
+                          bossBar.title("&aДо вашей смерти осталось:&c " + metadataMap.getOrDefault(JAIL_TRAP_DEATH_TIMER, 15) + "&a секунд");
+                          metadataMap.forcePut(JAIL_TRAP_DEATH_TIMER, metadataMap.getOrPut(JAIL_TRAP_DEATH_TIMER, () -> 15) - 1);
+                          if (metadataMap.getOrDefault(JAIL_TRAP_DEATH_TIMER, 15) <= 0) {
+                              player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 300, 10));
+                              player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 300, 10));
+                              Players.resetWalkSpeed(player);
+                              Players.resetFlySpeed(player);
+                              metadataMap.remove(JAIL_TRAP);
+                              metadataMap.remove(IS_WAITING_HELP);
+                              metadataMap.remove(JAIL_TRAP_DEATH_TIMER);
+                              bossBar.close();
+                              task.stop();
+
+                          }
+                      }
+                  }, 0, 20)
+                  .bindWith(arena);
+        subscribe(PlayerMoveEvent.class, EventPriority.HIGHEST)
+                .filter(eventFilter(getUserService(), arena))
+                .filter(EventFilters.playerHasMetadata(JAIL_TRAP))
+                .handler(e -> e.setCancelled(true))
+                .bindWith(arena);
         subscribe(AsyncPlayerChatEvent.class)
                 .filter(eventFilter(getUserService(), arena))
                 .filter(EventFilters.playerHasMetadata(JAIL_TRAP))
@@ -55,50 +101,20 @@ public class DeathJailTrap extends TrapBase {
                 .filter(e -> Metadata.provideForPlayer(e.getPlayer()).getOrDefault(HELP_WRITE_COUNT, 0) > 0)
                 .filter(e -> e.getMessage().equalsIgnoreCase("памагити"))
                 .handler(event -> {
+                    User u = getUserService().getUserByPlayerNullable(event.getPlayer());
                     int helpCount = metadataMap.getOrDefault(HELP_WRITE_COUNT, 0);
-                    if (helpCount == 1) {
-                        getUserService().sendMessage(user, "&aВы попросили о помощи. Если в течение 15 секунд к Вам прибежит игрок и кликнет по Вам, вы будете жить, иначе умрете");
-                        getUserService().broadcastMessage(arena, format("&a%s&e умоляет о помощи, помогите ему нажав по нему ПКМ", user.getUsername()));
+                    metadataMap.put(HELP_WRITE_COUNT, Math.max(helpCount - 1, 0));
+
+                    if (helpCount <= 1) {
+                        getUserService().sendMessage(u, "&aВы попросили о помощи. Если в течение 15 секунд к Вам прибежит игрок и кликнет по Вам, вы будете жить, иначе умрете");
+                        getUserService().broadcastMessage(arena, format("&a%s&e умоляет о помощи, помогите ему нажав по нему ПКМ", u.getUsername()));
                         metadataMap.put(IS_WAITING_HELP, true);
                         metadataMap.put(JAIL_TRAP_DEATH_TIMER, 15);
                         metadataMap.remove(HELP_WRITE_COUNT);
-                        final BossBar bossBar = factory.newBossBar();
-                        bossBar.addPlayer(event.getPlayer());
-                        bossBar.title("&aДо вашей смерти осталось:&c " + metadataMap.getOrDefault(JAIL_TRAP_DEATH_TIMER, 15) + "&a секунд")
-                               .color(BossBarColor.RED)
-                               .bindWith(arena);
-
-                        Schedulers.sync()
-                                  .runRepeating(task -> {
-                                      if (!metadataMap.has(JAIL_TRAP)) {
-                                          task.stop();
-                                          bossBar.close();
-                                          Players.resetWalkSpeed(event.getPlayer());
-                                          Players.resetFlySpeed(event.getPlayer());
-                                          event.getPlayer().removePotionEffect(PotionEffectType.JUMP);
-                                      }
-                                      else {
-                                          bossBar.title("&aДо вашей смерти осталось:&c " + metadataMap.getOrDefault(JAIL_TRAP_DEATH_TIMER, 15) + "&a секунд");
-                                          metadataMap.forcePut(JAIL_TRAP_DEATH_TIMER, metadataMap.getOrPut(JAIL_TRAP_DEATH_TIMER, () -> 15) - 1);
-                                          if (metadataMap.getOrDefault(JAIL_TRAP_DEATH_TIMER, 15) <= 0) {
-                                              event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 300, 10));
-                                              event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.POISON, 300, 10));
-                                              Players.resetWalkSpeed(event.getPlayer());
-                                              Players.resetFlySpeed(event.getPlayer());
-                                              metadataMap.remove(JAIL_TRAP);
-                                              bossBar.close();
-                                              task.stop();
-
-                                          }
-                                      }
-                                  }, 0, 20)
-                                  .bindWith(arena);
-
-                    } else {
-                        getUserService().sendMessage(user, "&aВам осталось ещё " + (helpCount - 1) + " раз!");
-
                     }
-                    metadataMap.put(HELP_WRITE_COUNT, Math.max(helpCount - 1, 0));
+                    else {
+                        getUserService().sendMessage(u, "&aВам осталось ещё " + (helpCount - 1) + " раз!");
+                    }
 
                 })
                 .bindWith(arena);
@@ -113,6 +129,8 @@ public class DeathJailTrap extends TrapBase {
                     if (rightClickedUser != null) {
                         getUserService().sendMessage(rightClickedUser, format("&7%s&a освободил вас!", clickerUser.getUsername()));
                         getUserService().sendMessage(clickerUser, format("&aВы освободили от заключения &7%s", rightClicked.getName()));
+                        questService.getActiveQuests(clickerUser, QuestType.HELP_TEN_PLAYERS).forEach(questService::onUpdate);
+
                     }
                     MetadataMap rightClickedMeta = Metadata.provideForPlayer(rightClicked);
                     rightClickedMeta.remove(JAIL_TRAP);

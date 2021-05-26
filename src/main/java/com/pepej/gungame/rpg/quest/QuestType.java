@@ -5,6 +5,7 @@ import java.time.Duration;
 public enum QuestType {
 
     KILL_TEN_PLAYER("Убить 10 игроков", "gungame.player", 10,500, Duration.ofHours(1).toMillis()),
+    HELP_TEN_PLAYERS("Помочь 10 игрокам", "gungame.player", 10, 1000, Duration.ofDays(1).toMillis()),
     KILL_HUNDRED_PLAYER("Убить 100 игроков &a(Vip+)", "gungame.vip", 100, 2500,  Duration.ofHours(12).toMillis()),
     PLAY_FIVE_GAMES("Сыграть 5 игр &a(Vip+)", "gungame.vip", 5, 750, Duration.ofHours(1).toMillis());
 

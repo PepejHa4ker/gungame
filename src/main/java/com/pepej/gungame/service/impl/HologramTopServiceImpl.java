@@ -9,13 +9,14 @@ import com.pepej.gungame.user.User;
 import com.pepej.gungame.utils.SquarelandApiUtils;
 import com.pepej.papi.Papi;
 import com.pepej.papi.scheduler.Schedulers;
-import com.pepej.papi.services.Services;
+import com.pepej.papi.services.Service;
 import com.pepej.papi.terminable.TerminableConsumer;
 import com.pepej.papi.terminable.module.TerminableModule;
 import com.pepej.papi.utils.StringUtils;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -34,12 +35,14 @@ public class HologramTopServiceImpl implements HologramTopService, TerminableMod
 
     @Getter
     Map<TopStrategy, GunGameHologram> holograms;
+
+    @Service
+    @NonFinal
     UserRepository userRepository;
 
 
     public HologramTopServiceImpl() {
         this.holograms = new HashMap<>();
-        this.userRepository = Services.load(UserRepository.class);
     }
 
 

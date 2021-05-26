@@ -7,7 +7,7 @@ import com.pepej.gungame.arena.ArenaConfig;
 import com.pepej.gungame.arena.loader.ArenaLoader;
 import com.pepej.gungame.menu.ArenaSelectorMenu;
 import com.pepej.gungame.menu.QuestSelectorMenu;
-import com.pepej.gungame.rpg.trap.SuperBowTrap;
+import com.pepej.gungame.rpg.trap.traps.SuperBowTrap;
 import com.pepej.gungame.service.UserService;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.event.filter.EventFilters;

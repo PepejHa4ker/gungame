@@ -74,6 +74,8 @@ public class SingleArena implements Arena {
     long timer;
     @NonFinal
     long startTimer;
+    @NonFinal
+    long stopTimer;
 
     @Override
     public Point getRandomPositionToSpawn() {
@@ -101,13 +103,15 @@ public class SingleArena implements Arena {
         this.userService = Services.load(UserService.class);
         this.questService = Services.load(QuestService.class);
         this.trapHandler = user -> {
-            final Position position = Position.of(user.location());
-            getContext().getTraps().entrySet().stream()
-                        .filter(e -> e.getKey().inRegion(position))
-                        .findFirst()
-                        .map(Map.Entry::getValue)
-                        .filter(trap -> trap.getCooldown().test())
-                        .ifPresent(t -> t.onActivate(user, this));
+            if (user.asPlayer() != null) {
+                final Position position = Position.of(user.location());
+                getContext().getTraps().entrySet().stream()
+                            .filter(e -> e.getKey().inRegion(position))
+                            .findFirst()
+                            .map(Map.Entry::getValue)
+                            .filter(trap -> trap.getCooldown().test())
+                            .ifPresent(t -> t.onActivate(user, this));
+            }
         };
         resetTimers();
 
@@ -139,6 +143,7 @@ public class SingleArena implements Arena {
                         "&b  Squareland.ru"
                 );
                 break;
+            case PRE_STOPPING:
             case STOPPING:
                 objective.applyLines(
                         "&d Окончание игры...",
@@ -200,8 +205,6 @@ public class SingleArena implements Arena {
     public void stop() {
         ArenaState stateBefore = getState();
         Promise.start()
-               .thenRunAsync(() -> setStatus(ArenaState.STOPPING))
-               .thenRunSync(() -> Log.info("Stopping arena %s", context.getConfig().getArenaName()))
                .thenApplySync($ -> userService.getTopUser())
                .thenAcceptAsync(user -> user.ifPresent(u -> {
                    if (stateBefore == ArenaState.STARTED) {
@@ -224,8 +227,20 @@ public class SingleArena implements Arena {
                        u.setGamesPlayed(u.getGamesPlayed() + 1);
                        questService.getActiveQuests(u, QuestType.PLAY_FIVE_GAMES).forEach(questService::onUpdate);
                    }
-                   leave(u, ArenaLeaveCause.END_OF_GAME);
                }))
+               .thenRunAsync(() -> {
+                   setStatus(ArenaState.PRE_STOPPING);
+                   userService.broadcastMessage(this, format("&eИгра закончена. Вы будете телепортированы на спавн через %s секунд.", this.stopTimer / 20));
+               })
+               .thenApplyAsync($ -> context.getUsers())
+               .thenAcceptSync(users -> users.forEach(u -> leave(u, ArenaLeaveCause.END_OF_GAME)))
+               .thenRunDelayedSync(() -> setStatus(ArenaState.STOPPING), stopTimer)
+               .thenRunSync(() -> {
+                   if (stateBefore == ArenaState.STARTED) {
+                       Log.info("Stopping arena %s", context.getConfig().getArenaName());
+                   }
+               })
+
                .thenRunAsync(this::resetTimers)
                .thenRunAsync(() -> setStatus(ArenaState.WAITING));
 
@@ -236,6 +251,7 @@ public class SingleArena implements Arena {
     public void resetTimers() {
         this.timer = context.getConfig().getArenaGameTime().getSeconds() * 20;
         this.startTimer = context.getConfig().getArenaStartDelay().getSeconds() * 20;
+        this.stopTimer = context.getConfig().getArenaStopDelay().getSeconds() * 20;
     }
 
     @Override
@@ -349,6 +365,7 @@ public class SingleArena implements Arena {
             }
             else if (state == ArenaState.STARTED) {
                 context.getEquipmentResolver().equipUser(user, context.getEquipmentResolver().resolve(1));
+
                 Point spawn = getRandomPositionToSpawn();
                 user.teleport(spawn);
             }
@@ -470,6 +487,8 @@ public class SingleArena implements Arena {
                             event.setCancelled(true);
                             userService.sendMessage(attackerUser, "&cИгрок в No-PvP режиме!");
                         }
+                    } else {
+                        event.setCancelled(true);
                     }
 
 

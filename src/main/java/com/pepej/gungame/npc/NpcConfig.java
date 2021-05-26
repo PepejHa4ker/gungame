@@ -1,6 +1,7 @@
 package com.pepej.gungame.npc;
 
 import com.pepej.papi.config.objectmapping.ConfigSerializable;
+import com.pepej.papi.config.objectmapping.meta.Matches;
 import com.pepej.papi.config.objectmapping.meta.Setting;
 import com.pepej.papi.serialize.Point;
 import lombok.*;
@@ -16,6 +17,7 @@ public class NpcConfig {
 
 
     @Setting
+    @Matches(value = "[a-z0-9-]*", failureMessage = "Invalid arena id")
     String id;
 
     @Setting

@@ -1,7 +1,7 @@
 package com.pepej.gungame;
 
 import com.pepej.gungame.arena.ArenaConfig;
-import com.pepej.gungame.rpg.trap.DeathJailTrap;
+import com.pepej.gungame.rpg.trap.traps.DeathJailTrap;
 import com.pepej.gungame.rpg.trap.TrapSetting;
 import com.pepej.papi.metadata.MetadataKey;
 import com.pepej.papi.scoreboard.ScoreboardObjective;

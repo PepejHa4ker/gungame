@@ -48,5 +48,8 @@ public class ArenaConfig {
     Duration arenaStartDelay;
 
     @Setting
+    Duration arenaStopDelay;
+
+    @Setting
     Duration arenaGameTime;
 }

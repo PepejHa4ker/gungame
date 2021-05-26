@@ -1,7 +1,9 @@
-package com.pepej.gungame.rpg.trap;
+package com.pepej.gungame.rpg.trap.traps;
 
 import com.pepej.gungame.Metadatas;
 import com.pepej.gungame.api.Arena;
+import com.pepej.gungame.rpg.trap.TrapBase;
+import com.pepej.gungame.rpg.trap.TrapType;
 import com.pepej.gungame.user.User;
 import com.pepej.papi.item.ItemStackBuilder;
 import com.pepej.papi.metadata.Metadata;

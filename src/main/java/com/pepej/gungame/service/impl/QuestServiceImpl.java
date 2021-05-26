@@ -15,7 +15,6 @@ import static java.util.stream.Collectors.toList;
 
 public class QuestServiceImpl implements QuestService {
 
-
     @Override
     public void register(final User user, final Quest quest) {
         user.getQuests().add(quest);
@@ -38,6 +37,8 @@ public class QuestServiceImpl implements QuestService {
                 return new KillHundredPlayersQuest(id);
             case PLAY_FIVE_GAMES:
                 return new PlayFiveGamesQuest(id);
+            case HELP_TEN_PLAYERS:
+                return new HelpTenPlayersQuest(id);
         }
 
         throw new AssertionError();

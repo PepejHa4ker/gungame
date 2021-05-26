@@ -57,6 +57,7 @@ public abstract class QuestBase implements Quest {
         if (player != null) {
             economy.depositPlayer(player, this.getReward());
         }
+        complete(user);
     }
 
     public void complete(User user) {
@@ -71,7 +72,7 @@ public abstract class QuestBase implements Quest {
 
         this.setCompletionTime(System.currentTimeMillis());
         this.setCompleted(true);
-        complete(user);
+        preComplete(user);
 
         return true;
 
